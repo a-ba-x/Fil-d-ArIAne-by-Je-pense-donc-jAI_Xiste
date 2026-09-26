@@ -1,0 +1,30 @@
+<A>
+L’orateur va retrouver des notes de la précédente réunion, qui ne sont pas assez complètes.
+Le besoin est de remettre les idées évoquées et non abandonnées, y compris celles qui auraient été dites sans qu’on retrouve leur nom.
+Clarifier à quel moment l’outil est utilisé : pendant la réunion, à la fin, ou pour accompagner toutes les réunions.
+Clarifier si l’outil devient un espace type Notion Database permettant de montrer ce qui a été produit à la fin de la réunion.
+
+<B>
+L’orateur confirme.
+
+<A>
+Exemple d’un outil construit pour ses élèves : un système type Notion, présenté comme un « Excel boosté », avec des databases réorganisables (colonnes), filtrables, avec des vues type Kanban.
+Le système permet d’attribuer des tâches.
+Exemple de 3 databases liées à la gestion du matériel : chaque objet (ex. Raspberry Pi) a un état (construit/perdu/chez quelqu’un/soldered), et on suit où se trouve physiquement le matériel (chez Marc, etc.).
+Une base « tâches »/tableau liste toutes les tâches avec urgences, deadlines, personnes, etc.
+Une database de documents existait aussi, mais elle ne fonctionnait pas bien : la mise à jour manuelle était trop lourde, même avec des fiches pas à pas, et l’update finissait par être fait par une seule personne.
+
+<B>
+Suggestion/limite : produire des fichiers JSON par projet (ex. un très gros JSON par projet) plutôt que quelque chose de synchronisé en continu.
+Cela implique de re-télécharger le JSON à chaque fois, puis de le remettre dans l’outil si ce n’est pas trop complexe, sauf en cas de création d’un nouveau.
+
+<A>
+Préoccupation : garder l’outil abordable pour l’utilisateur.
+L’orateur explique qu’en ouvrant Notion, ça peut ressembler très vite à quelque chose de complexe.
+L’utilisateur ne devrait pas avoir besoin de télécharger un fichier et de se compliquer la vie.
+Argument : quel que soit l’effort, une interface trop « balaise » risque de submerger l’utilisateur et de rendre l’outil difficile à utiliser.
+Constat : vouloir surpasser trop fortement l’UI existante peut mener à une interface trop chargée.
+
+<B>
+L’orateur rapporte une expérience : nécessité de faire enseigner une UI extrêmement abordable pendant un stage, car les participants ne connaissaient presque rien en informatique.
+
