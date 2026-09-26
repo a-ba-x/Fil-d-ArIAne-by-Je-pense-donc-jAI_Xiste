@@ -1,0 +1,60 @@
+A
+Le lancement du système vise à créer de “vraies complexités” de réunion.
+Ça peut mettre un moment à tourner sur l’ordinateur du locuteur, mais moins que le temps passé à parler.
+
+B
+Question implicite : “j’y somme ou pas j’y somme” (faut-il que je fasse/je m’en charge ?).
+
+A
+Attendre de comprendre concrètement ce que l’utilisateur reçoit quand il dit “Traité”.
+Exemple : après ~10 minutes, si l’utilisateur dit “Traité”, que veut-il du programme ?
+
+B
+Souhait : obtenir globalement la liste des choses importantes dites pendant la réunion.
+
+A
+Intention : faire un texte “au vrac”, puis le “clean-up” quand l’échange sera suffisamment clarifié.
+Idée : fournir soit un résumé, soit aussi tout ce qui a été fait pendant la semaine en cours (avec qui a fait quoi, selon si chacun l’a indiqué).
+Dans leurs réunions : début par un tour de table où chacun dit ce qu’il a fait et ce qu’il souhaite ; ça doit permettre de structurer la réunion.
+Si personne n’a fait le tour de table, on ne peut pas “inventer” les actions : le tour de table conditionne ce que l’on peut produire.
+
+B
+Ce n’est “pas un problème” : en général, tout le monde fait les tours de table, donc c’est une option.
+L’idée n’est pas de bloquer sur le tour de table : le point doit juste fonctionner.
+
+A
+Objectif pédagogique : que les participants comprennent ce qu’est un tour de table sans que le terme soit explicitement utilisé.
+Exemple : un tour de table peut prendre d’autres formes ; ex. “Live tour de table : quelles sont vos préférences sur quel domaine vous voulez faire ?” puis chacun exprime ce qu’il tente et ce qu’il ne veut pas.
+
+B
+Précision : il faut différencier les “choses faites” et ce que les gens veulent faire / veulent apporter à la réunion.
+Formulation attendue : reproduire exactement ce que le tour de table doit couvrir (actions réalisées et intentions pour la réunion).
+
+A
+Difficulté : retrouver des notes précédentes jugées mal écrites et incomplètes.
+Besoin : mettre par écrit les idées dites (ou mises) qui n’ont pas été abandonnées ; certaines idées peuvent avoir été dites mais portées par la mauvaise personne / mal nommées (préoccupation sur la traçabilité).
+
+A
+Clarification attendue : quand l’outil est utilisé—au milieu de la réunion, à la fin, ou comme accompagnement sur toute la réunion.
+Clarification sur l’output : devient-il une base type Notion Database montrable à la fin ?
+Question : l’utilisateur veut-il “un affichage” final (ex. Notion réorganisé), ou un processus continu sur toutes les réunions ?
+
+A
+Exemple de référence : projet “Infernal” (construit pour des élèves l’année précédente), avec une interface type Notion : des databases réorganisables comme un Excel “boosté”.
+Fonctionnement : colonnes réorganisables, filtres, views type Kanban, attribut de tâches.
+Cas d’usage : une database de gestion du matériel (objets, qui l’a, état : construit/perdu/chez quelqu’un/soldered ; ex. suivi de Raspberry Pi et où se trouve chaque élément).
+Une autre database de documents : contrainte logistique d’update jugée trop lourde (mise à jour à la main), malgré des fiches pas à pas ; au final, mise à jour portée par les personnes.
+
+B
+Limitation/solution évoquée : générer des JSON par projet et n’avoir qu’un gros JSON mis à jour en bas, pour ensuite l’exploiter.
+Conséquence : le fichier JSON implique de devoir le re-télécharger à chaque fois et le réinjecter si nécessaire, sauf si création d’un nouveau projet.
+
+A
+Idée : garder l’accessibilité pour l’utilisateur (l’outil doit rester abordable).
+Contraste : ne pas obliger l’utilisateur à télécharger/embêter manuellement ; vouloir que l’outil ressemble vite à quelque chose d’utilisable dès l’ouverture (éviter la friction).
+Crainte : quel que soit l’effort d’UI, une UI trop “balaise” risque de submerger l’utilisateur et rendre l’outil ingérable.
+
+A
+Crainte structurante : risque de s’éloigner d’un simple “transcripteur de réunion” vers une application de productivité qui s’auto-met à jour à chaque réunion.
+Mention d’un besoin non finalisé : si quelqu’un avance sur une tâche pendant le suivi, il faut que cela soit reflété (phrase interrompue par la fin du chunk).
+
