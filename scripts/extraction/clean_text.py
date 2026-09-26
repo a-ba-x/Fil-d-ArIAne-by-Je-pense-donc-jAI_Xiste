@@ -59,12 +59,33 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
+REPO_ROOT = Path(__file__).resolve().parents[2]
+INPUT_FOLDER = REPO_ROOT / "files" / "raw_text_chunks"
+CLEAN_TEXT_OUTPUT = REPO_ROOT / "files" / "extracted_data" / "whole_clean_text.txt"
+RAW_TEXT_OUTPUT = REPO_ROOT / "files" / "backup" /"whole_raw_text.txt"
 
 
 DEFAULT_OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-nano")
 DEFAULT_OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5-coder:1.5b")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/chat")
 
+# ---------------------------------------------------------------------------
+# Append text to raw text file
+# ---------------------------------------------------------------------------
+def append_raw_text(path: Path) -> None:
+    RAW_TEXT_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+
+    text = path.read_text(encoding="utf-8-sig")
+
+    if not text.strip():
+        return
+
+    with RAW_TEXT_OUTPUT.open("a", encoding="utf-8") as f:
+        if RAW_TEXT_OUTPUT.stat().st_size > 0:
+            f.write("\n\n")
+
+        f.write(text.rstrip())
+        f.write("\n")
 
 # ---------------------------------------------------------------------------
 # File extraction
@@ -72,6 +93,12 @@ OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/chat")
 
 def read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8-sig")
+
+
+
+# ---------------------------------------------------------------------------
+# File extraction for 
+# ---------------------------------------------------------------------------
 
 
 def find_marker_line(text: str) -> int:
@@ -207,7 +234,7 @@ def extract_segment(paths: List[Path]) -> str:
 # Model prompt + output schema
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """
+SYSTEM_PROMPT_RAW = """
 Tu reçois un chunk de transcription d'une réunion. Utilise tout le chunk comme contexte et produis une représentation fidèle et compacte des informations utiles, destinée à être analysée ensuite par un autre modèle pour créer un résumé, des tâches et des décisions.
 
 Conserve les idées, propositions, problèmes, contraintes, questions, décisions, désaccords, intentions, actions, responsables, dates/chiffres, arguments et exemples utiles à la compréhension du projet ou de la discussion.
@@ -220,125 +247,34 @@ Reformule pour supprimer le bruit oral et rendre le contenu clair, sans ajouter 
 
 Ne crée pas de catégories ou d'étiquettes comme « Problème », « Proposition », « Contrainte », « Besoin », etc.
 
-Conserve exactement les labels de locuteurs présents dans le chunk. Les labels sont locaux au chunk : ne suppose pas qu'un même label dans un autre chunk désigne la même personne.
+Conserve exactement les labels de locuteurs présents dans le chunk.
 
 En cas de doute, conserve l'information si elle pourrait être utile au modèle suivant.
 
 Retourne uniquement le JSON demandé par le programme.
 """.strip()
 
-'''
-Tu reçois une transcription continue d'une réunion.
+SYSTEM_PROMPT_DIARIZED = """
+Tu reçois un chunk de transcription brute d'une réunion, sans labels fiables de locuteurs.
 
-Le format est : 
-<Speaker_name_or_label>\n
-Text they say
-\n\n
-<Speaker_name_or_label>\n
-Text they say
-\n\n
+Utilise tout le chunk comme contexte et produis une représentation fidèle, compacte et exploitable de ce qui a réellement été dit. Le résultat sera ensuite utilisé par un autre modèle pour produire un résumé, des tâches, des décisions et des points à suivre.
 
-Utilise l'ensemble du texte comme contexte, mais ne restitue que les
-informations, idées et éléments de discussion pertinents.
+Conserve les idées, propositions, problèmes, contraintes, questions, décisions, désaccords, intentions, actions, échéances, chiffres, arguments et exemples utiles à la compréhension de la réunion ou du projet.
 
-Le résultat doit être une extraction structurée des idées importantes,
-pas une retranscription nettoyée.
+Supprime les fillers, hésitations, réactions sans contenu (« oui », « ouais », « d'accord », etc.), répétitions, transitions sans contenu et détails anecdotiques inutiles.
 
--Conserve exactement les locuteurs et associe chaque item au locuteur qui l'a exprimé.
+Découpe en unités de pensée : une unité correspond à une idée utile. Regroupe plusieurs phrases lorsqu'elles développent la même idée, mais sépare les idées distinctes. Conserve l'ordre chronologique.
 
-Garde :
-- les idées et propositions nouvelles ;
-- les problèmes et contraintes identifiés ;
-- les questions importantes ;
-- les décisions et points de désaccord ;
-- les besoins / exigences du produit ;
-- les observations utiles ;
-- les exemples lorsqu'ils apportent une information utile ;
-- les idées évoquées même si elles sont ensuite abandonnées, en conservant
-  le fait qu'elles ont été abandonnées si cela ressort du contexte.
-- les noms, chiffres, dates, acronymes et termes techniques.
+Reformule pour supprimer le bruit oral et rendre le contenu clair, sans ajouter d'information ni d'interprétation. Ne transforme pas une proposition en décision, une intention en action réalisée, une question en affirmation ou une possibilité en fait établi.
 
-Supprime :
-- les hésitations et fillers ;
-- « oui », « ouais », « d'accord », « hum » seuls ;
-- les phrases de transition sans contenu ;
-- les commentaires sur le fait de prendre des notes ou d'organiser la discussion ;
-- les répétitions d'une même idée ;
-- les formulations différentes qui expriment exactement le même point ;
-- les détails anecdotiques qui n'apportent rien à la compréhension du sujet.
+N'invente jamais de locuteur.
 
-Une unité doit contenir une seule idée utile.
-Plusieurs idées distinctes dans une même intervention doivent être séparées.
-Regroupe les détails qui servent à illustrer une même idée.
+Le contexte précédent sert uniquement à comprendre la continuité et les références. Ne le reproduis pas dans la sortie. La sortie doit représenter uniquement le chunk à traiter.
 
-Ne cherche pas à produire un résumé. Cherche à produire une représentation fidèle et compacte des informations utiles de la réunion, destinée à être analysée ultérieurement par un autre modèle.
+En cas de doute, conserve l'information si elle pourrait être utile au modèle suivant.
 
-Utilise le contexte de toute la conversation pour comprendre les références,
-mais n'ajoute aucune information absente du texte.
-
-N'ajoute pas de catégories ou d'interprétation qui ne sont pas demandées.
-
-Ne résume pas toute la réunion en quelques points : conserve une granularité
-suffisamment fine pour ne pas perdre les idées distinctes.
-
-Ne produis pas de commentaires sur ton travail.
-Retourne uniquement la structure demandée: 
-<Speaker_name_or_label>\n
-<item>
-<item>
-…
-<item>
-\n\n
-<Speaker_name_or_label>\n
-<item>
-<item>
-…
-<item>
-\n\n
-…
-<Speaker_name_or_label>\n
-<item>
-<item>
-…
-<item>
-\n\n
-
-Tu es un éditeur de transcription de réunions en français.
-
-Tu reçois UNE SEULE TRANSCRIPTION CONTINUE. Elle peut contenir plusieurs
-locuteurs et plusieurs idées. Utilise tout le contexte disponible pour
-comprendre les références, les pronoms, les ellipses et les liens entre les
-phrases.
-
-Ta tâche est de transformer la transcription brute en unités de pensée lisibles.
-
-RÈGLES:
-- Ne fais PAS un résumé global.
-- Ne supprime AUCUNE idée exprimée.
-- N'INVENTE aucune information.
-- Nettoie les hésitations, répétitions purement orales et artefacts évidents
-  de transcription.
-- Conserve fidèlement le sens.
-- Une unité = une idée cohérente qui peut être lue indépendamment.
-- Une unité peut contenir plusieurs phrases si elles portent sur la même idée.
-- Sépare les idées distinctes en items distincts.
-- Utilise le contexte des phrases voisines pour comprendre le sens.
-- Ne change pas une question en affirmation.
-- Ne change pas une proposition en décision.
-- Ne change pas une intention en fait accompli.
-- Conserve les noms, chiffres, dates, acronymes et termes techniques.
-- Conserve exactement les locuteurs et associe chaque item au locuteur qui
-  l'a exprimé.
-- Ne fusionne pas deux locuteurs.
-- Ne crée pas de locuteur qui n'existe pas dans le texte.
-- Garde le français.
-
-IMPORTANT:
-- Le résultat doit couvrir l'ensemble des idées exprimées dans la
-  transcription.
-- Ne produis pas de commentaires sur ton travail.
-- Retourne uniquement la structure demandée.
-'''
+Retourne uniquement le JSON demandé.
+""".strip()
 
 
 OUTPUT_SCHEMA = {
@@ -369,7 +305,7 @@ OUTPUT_SCHEMA = {
 # OpenAI
 # ---------------------------------------------------------------------------
 
-def clean_with_openai(text: str, previous_context: str, model: str) -> List[dict]:
+def clean_with_openai(text: str, previous_context: str, model: str, system_prompt: str) -> List[dict]:
     api_key = os.getenv("OPENAI_API_KEY")
 
     if not api_key:
@@ -383,7 +319,7 @@ def clean_with_openai(text: str, previous_context: str, model: str) -> List[dict
     response = client.responses.create(
     model=model,
     reasoning={"effort": "none"},
-    instructions=SYSTEM_PROMPT,
+    instructions=system_prompt,
     input=[
         {
             "role": "user",
@@ -423,22 +359,7 @@ def clean_with_openai(text: str, previous_context: str, model: str) -> List[dict
         }
     },
 )
-    '''
-    response = client.responses.create(
-        model=model,
-        reasoning={"effort": "none"},
-        instructions=SYSTEM_PROMPT,
-        input=f"TRANSCRIPTION À TRAITER:\n\n{text}",
-        text={
-            "format": {
-                "type": "json_schema",
-                "name": "meeting_thought_units",
-                "strict": True,
-                "schema": OUTPUT_SCHEMA,
-            }
-        },
-    )
-    '''
+
     try:
         data = json.loads(response.output_text)
     except json.JSONDecodeError as exc:
@@ -453,7 +374,7 @@ def clean_with_openai(text: str, previous_context: str, model: str) -> List[dict
 # Ollama
 # ---------------------------------------------------------------------------
 
-def clean_with_ollama(text: str, model: str) -> List[dict]:
+def clean_with_ollama(text: str, model: str, system_prompt: str) -> List[dict]:
     payload = {
         "model": model,
         "stream": False,
@@ -566,30 +487,33 @@ def format_output(blocks: List[dict]) -> str:
 # ---------------------------------------------------------------------------
 
 def main() -> int:
+
+    # ---------------------------------------------------------------------------
+    # Command-line arguments
+    # ---------------------------------------------------------------------------
     parser = argparse.ArgumentParser(
-        description="Clean a French transcript into thought units."
+        description="Clean a transcript into thought units."
     )
 
     parser.add_argument(
-        "files",
-        nargs="+",
-        type=Path,
-        help="1 or 2 .txt input files",
-    )
-
-    parser.add_argument(
-        "--mode",
+        "--ai",
         choices=["api", "local"],
         default="api",
-        help="Use OpenAI API or local Ollama (default: api)",
+        help="AI backend: OpenAI API or local Ollama (default: api)",
     )
 
     parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        default=Path("clean_text.txt"),
-        help="Output file (default: clean_text.txt)",
+        "--diarized",
+        action="store_true", #if i write nothing then that means false
+        help="Input transcript contains speaker labels.",
+    )
+
+    parser.add_argument(
+    "-o",
+    "--output",
+    type=Path,
+    default=CLEAN_TEXT_OUTPUT,
+    help="Output file",     
     )
 
     parser.add_argument(
@@ -600,47 +524,124 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    if len(args.files) not in (1, 2):
-        parser.error("Provide exactly 1 or 2 input files.")
+    # ---------------------------------------------------------------------------
+    # Select input files
+    # ---------------------------------------------------------------------------
+    files = sorted(
+    (
+        path
+        for path in INPUT_FOLDER.glob("*.txt")
+        if path.is_file()
+    ),
+    key=lambda path: path.stat().st_ctime,
+    )[:2]
 
-    for path in args.files:
-        if not path.exists():
-            print(f"Erreur: fichier introuvable: {path}", file=sys.stderr)
+    if not files:
+        print(
+            f"Aucun fichier .txt trouvé dans {input_folder}",
+            file=sys.stderr,
+        )
+        return 1
+
+    print("Fichiers sélectionnés :")
+    for path in files:
+        print(f"  {path.name}")
+
+    # ---------------------------------------------------------------------------
+    # Update whole_raw_text.txt with the new chunk
+    # ---------------------------------------------------------------------------
+    append_raw_text(files[0])
+    print(f"Ajouté au fichier brut : {files[0].name}")
+
+    # ---------------------------------------------------------------------------
+    # According to diarized, extract the segment to process and choose the prompt
+    # ---------------------------------------------------------------------------
+
+    if args.diarized:
+        # Speaker-labelled transcript: use # markers and speaker context
+        try:
+            previous_context, segment = extract_segment(files)
+        except (OSError, ValueError) as exc:
+            print(f"Erreur d'extraction: {exc}", file=sys.stderr)
             return 1
 
-    try:
-        previous_context, segment = extract_segment(args.files)
-    except (OSError, ValueError) as exc:
-        print(f"Erreur d'extraction: {exc}", file=sys.stderr)
-        return 1
+        system_prompt = SYSTEM_PROMPT_DIARIZED
+
+    else:
+        # Raw transcript: oldest file is context, second-oldest is the segment.
+        try:
+            if len(files) == 1:
+                previous_context = ""
+                segment = files[0].read_text(
+                    encoding="utf-8-sig"
+                ).strip()
+            else:
+                previous_context = files[0].read_text(
+                    encoding="utf-8-sig"
+                ).strip()
+
+                segment = files[1].read_text(
+                    encoding="utf-8-sig"
+                ).strip()
+
+        except OSError as exc:
+            print(f"Erreur de lecture: {exc}", file=sys.stderr)
+            return 1
+
+    system_prompt = SYSTEM_PROMPT_RAW
 
     word_count = len(segment.split())
     print(f"Bloc extrait: ~{word_count} mots")
-    print(f"Mode: {args.mode}")
+    print(f"AI: {args.ai}")
+
+    # ---------------------------------------------------------------------------
+    # According to AI mode, call the appropriate model and clean the text
+    # ---------------------------------------------------------------------------
 
     try:
-        if args.mode == "api":
-            model = args.model or DEFAULT_OPENAI_MODEL
-            print(f"Modèle: {model}")
-            blocks = clean_with_openai(segment, previous_context, model)
+        model = args.model or DEFAULT_OPENAI_MODEL
+        print(f"Modèle: {model}")
+        if args.ai == "api":
+
+            blocks = clean_with_openai(
+                segment,
+                previous_context,
+                model,
+                system_prompt,
+            )
+
         else:
-            model = args.model or DEFAULT_OLLAMA_MODEL
-            print(f"Modèle: {model}")
-            blocks = clean_with_ollama(segment, model)
+
+            blocks = clean_with_ollama(
+                segment,
+                previous_context,
+                model,
+                system_prompt,
+            )
 
     except Exception as exc:
-        print(f"\nErreur pendant le traitement: {exc}", file=sys.stderr)
+        print(
+            f"\nErreur pendant le traitement: {exc}",
+            file=sys.stderr,
+        )
         return 1
 
     result = format_output(blocks)
 
     try:
-        args.output.write_text(result, encoding="utf-8")
+        CLEAN_TEXT_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+
+        with CLEAN_TEXT_OUTPUT.open("a", encoding="utf-8") as f:
+            if CLEAN_TEXT_OUTPUT.stat().st_size > 0:
+                f.write("\n\n")
+            f.write(result.rstrip())
+            f.write("\n")
+
     except OSError as exc:
         print(f"Erreur d'écriture: {exc}", file=sys.stderr)
         return 1
 
-    print(f"\nFichier écrit: {args.output.resolve()}")
+    print(f"\nFichier mis à jour: {CLEAN_TEXT_OUTPUT}")
     return 0
 
 
