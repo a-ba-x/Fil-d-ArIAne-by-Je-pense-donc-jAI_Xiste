@@ -172,8 +172,8 @@ class MeetingApp(tk.Tk):
     def refresh_project_list(self):
         ids = projects.list_projects()
         self.project_combo["values"] = ids
-        if ids and not self.active_project.get():
-            self.active_project.set(ids[0])
+        if self.active_project.get() not in ids:
+            self.active_project.set(ids[0] if ids else "")
         self.tab_search.refresh_project_checklist(ids)
         self._on_project_changed()
 
@@ -784,6 +784,9 @@ class ConfigTab(ttk.Frame):
 
     def _save(self):
         storage.save_config(self._current_cfg())
+        app = self.winfo_toplevel()
+        if hasattr(app, "refresh_project_list"):
+            app.refresh_project_list()
         messagebox.showinfo("Configuration", "Configuration enregistrée.")
 
     def _push(self):
