@@ -22,6 +22,6 @@ Ouais, après, le, le, en fait, je sais pas comment dire, j'aime bien l'idée, e
 <B>
 Oui, je sais, tu sais, j'ai dû faire enseigner une UI extrêmement abordable pendant mon stage aussi, puisqu'il y avait des gens, ils étaient... Ils ne connaissaient vraiment rien en info...
 
-<A>
+#<A>
 Mais du coup, en fait, le souci que j'ai, c'est que on est en train de s'éloigner d'un transcripteur de réunion vers une application de productivité qui s'update toute seule quand on a une réunion, et typiquement, si quelqu'un avance sur n'importe laquelle des tâches, oh, attends, je. 
   

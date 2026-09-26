@@ -34,5 +34,5 @@ Oui, mais il faut qu'il soit ouvert à différentes phrases d'introduction, c'es
 <B>
 Non, il faut les différencier, c'est du coup tout ce qui a été fait, ce que les gens veulent faire, oui.Ou est-ce que j'ai l'envie de faire pour en prendre dans la réunion, quoi... C'est exactement ça qu'on aurait qu'à faire.
 
-<A>
+#<A>
 En vrai, je vais trouver mes notes mal écrites de l'autre jour,

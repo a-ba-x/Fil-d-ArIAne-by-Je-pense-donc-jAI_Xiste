@@ -1,57 +1,28 @@
 A
-Ça lance ; l’objectif est d’avoir des complexités de réunion réelles.
-Le système met un moment à tourner sur mon ordinateur pour démarrer, mais c’est moins long que le temps de la discussion.
+Notes de l’autre jour à retrouver et compléter : les idées déjà dites et non abandonnées doivent être consignées, même si certaines ont été dites “en vrac”.
+Clarifier quand l’outil est utilisé : à la mi-réunion, à la fin, ou pour accompagner toutes les réunions.
+Clarifier ce que signifie “accompagner” sur le suivi : par exemple, l’outil devient-il une sorte de base Notion où l’on peut montrer ce qu’il y avait à la fin de la réunion ?
+
+A
+Exemple d’usage : un outil Notion utilisé pour des élèves l’année dernière, nommé “Infernal”.
+Décrit comme une sorte de “Excel boosté” : des databases réorganisables (colonnes), filtrables et avec des views comme un Kanban.
+Fonctionnalités d’attribution de tâches.
+Exemple de base : gestion de matériel physique (objets possédés, état : construit/perdu/chez quelqu’un/soldered ; localisation comme “chez Marc”, etc.).
+Existait aussi une base de tâches avec des urgences, deadlines et personnes.
+Existait aussi une base de documents, mais elle ne fonctionnait pas bien pour cet objet : contrainte logistique d’update manuel trop importante malgré des fiches pas-à-pas ; mise à jour finalement faite par personne.
 
 B
-Question sur l’usage de “j’y somme” / “j’y somme ou pas”.
+Pour limiter la charge, idée : produire au maximum des JSON par projet, plutôt qu’un gros système centralisé.
+Contrainte associée : il faut retélécharger le JSON à chaque fois et le remettre dedans si ce n’est pas compliqué.
+Possibilité : si nécessaire, créer un nouveau JSON.
 
 A
-Attente de comprendre ce que reçoit concrètement l’utilisateur quand il dit “Traité”.
-Exemple : après ~10 minutes de parole, quand tu dis “Traité”, qu’attends-tu du programme ?
+Intérêt/contrainte : l’utilisateur doit continuer à trouver l’outil abordable.
+À l’ouverture de Notion, l’outil peut rapidement ressembler à quelque chose de complexe.
+Objectif : éviter que l’utilisateur doive télécharger quelque chose et s’y “embêter”.
+Tendance observée : quelle que soit l’UI, elle peut submerger l’utilisateur et rendre l’outil inutilisable si elle devient trop “balaise”.
+Constat : on ne réussira probablement pas à faire une UI plus balaise que celle existante (dans l’existant évoqué), et au-delà l’UI risque d’être trop lourde pour l’utilisateur.
 
 B
-Avoir globalement la liste des choses importantes dites pendant la réunion.
-
-A
-Idée de faire un résumé “au vrac” puis de nettoyer ensuite.
-Souhait d’inclure aussi ce qui a été fait pendant la semaine en cours, si chacun a dit ce qu’il a fait ou non.
-
-B
-Les réunions commencent en général par un tour de table où chacun dit ce qu’il a fait et ce qu’il souhaite.
-Le tour de table semble généralement déjà fait ; sinon, il faudrait un mécanisme/option.
-
-A
-Importance du tour de table : sinon la réunion est “fiant(e)”.
-On ne peut pas inventer si personne n’a dit ce qu’il a fait ; sans tour de table, pas de données fiables.
-Les participants doivent comprendre ce qu’est un tour de table sans que “tour de table” soit le mot ; ex : “café chacun cette semaine” sert aussi de tour de table.
-Un tour de table peut prendre des formes variées : ex “live tour de table” avec préférences et ce que chacun tente / ne veut pas faire.
-
-B
-Il faut différencier : ce qui a été fait par les gens, et ce que les gens veulent faire.
-
-A
-Besoin de mettre les idées dites (ou mises de côté) et celles qui n’ont pas été abandonnées ; retrouver des notes précédentes jugées incomplètes.
-Le nom des idées pourrait poser problème s’il y a des idées dites mais pas clairement identifiées.
-
-A
-Clarifier quand cet outil est utilisé : mi-réunion, fin de réunion, ou sur toutes les réunions.
-Clarifier si l’outil finit comme une base type Notion Database montrable à la fin, ou seulement un support ponctuel.
-Comparer à une structure notion-like déjà utilisée pour des élèves : Notion comme “Excel boosté” avec des databases, réorganisations de colonnes, filtres, views (Kanban).
-Expliquer des exemples de databases : gestion du matos (objet, qui l’a, état : construit/perdu/chez quelqu’un/soldered, etc.), base des tâches (urgences, deadlines, personnes), et une database des documents (jugée moins pertinente car mise à jour manuelle trop lourde).
-
-B
-Limiter au maximum : possibilité de générer des JSON par projet avec un très gros JSON en bas, mis à jour ou rien d’autre.
-Conséquence : il faudrait retélécharger à chaque fois et le remettre dedans si nécessaire ; difficulté d’en créer un nouveau.
-
-A
-Préoccupation : conserver l’accessibilité et l’abordabilité pour l’utilisateur.
-Exigence implicite : l’utilisateur ne doit pas avoir à télécharger/embêter ; on veut que ça ressemble vite à quelque chose de clair à l’ouverture de Notion.
-Risque : même si on améliore l’UI, on risque de submerger l’utilisateur et rendre l’outil trop lourd.
-
-B
-Expérience : enseignement d’une UI extrêmement abordable pendant un stage ; public débutant.
-
-A
-Problème de direction : on s’éloigne d’un simple “transcripteur de réunion” vers une application de productivité qui s’update automatiquement à chaque réunion.
-Conséquence attendue : si quelqu’un avance sur une tâche pendant la réunion (ou n’importe laquelle des tâches), le système devrait refléter ça ; la discussion s’arrête sur ce point.
+Retour d’expérience : besoin d’enseigner une UI extrêmement abordable pendant un stage, car les personnes ne connaissaient vraiment rien en informatique.
 
