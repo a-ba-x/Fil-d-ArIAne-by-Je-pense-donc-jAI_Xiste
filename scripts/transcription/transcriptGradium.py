@@ -3,12 +3,18 @@ from urllib import response
 import gradium
 import requests
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
 def transcribe_audio(audio_path, filename): 
     """ 
     audio_path: str, path to the audio file to be transcribed
     filename: str, path to the output text file where the transcript will be saved
     """
-    api_key = os.environ["GRADIUM_API_KEY"]
+    api_key = os.getenv("GRADIUM_API_KEY")
     with open(audio_path, "rb") as audio_file:
         response = requests.post(
             "https://api.gradium.ai/api/post/speech/asr",
