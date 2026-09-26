@@ -59,7 +59,11 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = next(
+    (parent for parent in Path(__file__).resolve().parents
+     if (parent / "files").is_dir() and ((parent / "app.py").is_file() or (parent / "scripts").is_dir())),
+    Path(__file__).resolve().parents[1],
+)
 INPUT_FOLDER = REPO_ROOT / "files" / "raw_text_chunks"
 CLEAN_TEXT_OUTPUT = REPO_ROOT / "files" / "extracted_data" / "whole_clean_text.txt"
 RAW_TEXT_OUTPUT = REPO_ROOT / "files" / "backup" /"whole_raw_text.txt"
@@ -132,7 +136,7 @@ def get_last_speaker_turns(text: str, n: int = 2) -> str:
     return "\n\n".join(blocks[-n:])
 
 
-def extract_segment(paths: List[Path]) -> Tuple[str, str]:
+def extract_segment(paths: List[Path]) -> tuple[str, str]:
     """
     Return:
         previous_context, current_chunk
@@ -382,7 +386,7 @@ def clean_with_ollama(text: str, model: str, system_prompt: str) -> List[dict]:
         "messages": [
             {
                 "role": "system",
-                "content": SYSTEM_PROMPT
+                "content": SYSTEM_PROMPT_DIARIZED
                 + "\n\nRetourne exactement un objet JSON avec cette forme:"
                 + '\n{"blocks":[{"speaker":"...","items":["...","..."]}]}',
             },
@@ -523,6 +527,7 @@ def main() -> int:
     )
 
     args = parser.parse_args()
+    output_path = args.output
 
     # ---------------------------------------------------------------------------
     # Select input files
@@ -538,7 +543,7 @@ def main() -> int:
 
     if not files:
         print(
-            f"Aucun fichier .txt trouvé dans {input_folder}",
+            f"Aucun fichier .txt trouvé dans {INPUT_FOLDER}",
             file=sys.stderr,
         )
         return 1
@@ -629,10 +634,10 @@ def main() -> int:
     result = format_output(blocks)
 
     try:
-        CLEAN_TEXT_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with CLEAN_TEXT_OUTPUT.open("a", encoding="utf-8") as f:
-            if CLEAN_TEXT_OUTPUT.stat().st_size > 0:
+        with output_path.open("a", encoding="utf-8") as f:
+            if output_path.stat().st_size > 0:
                 f.write("\n\n")
             f.write(result.rstrip())
             f.write("\n")
@@ -641,7 +646,7 @@ def main() -> int:
         print(f"Erreur d'écriture: {exc}", file=sys.stderr)
         return 1
 
-    print(f"\nFichier mis à jour: {CLEAN_TEXT_OUTPUT}")
+    print(f"\nFichier mis à jour: {output_path}")
     return 0
 
 
