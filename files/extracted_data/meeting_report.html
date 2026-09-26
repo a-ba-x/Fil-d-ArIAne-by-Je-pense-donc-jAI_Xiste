@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport de réunion — Périmètre et usage de l’outil</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --text: #1f2933;
+      --muted: #5f6b76;
+      --primary: #245b78;
+      --primary-soft: #eaf2f6;
+      --border: #d8e0e6;
+      --warning-bg: #fff8e6;
+      --warning-border: #d59b24;
+      --neutral-bg: #f7f9fa;
+      --shadow: 0 4px 16px rgba(31, 41, 51, 0.07);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .container {
+      width: min(1120px, calc(100% - 32px));
+      margin: 32px auto;
+    }
+
+    header {
+      padding: 32px;
+      color: #ffffff;
+      background: linear-gradient(135deg, #1e4d68, #307594);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 4vw, 2.35rem);
+      line-height: 1.2;
+    }
+
+    header p {
+      max-width: 780px;
+      margin: 0;
+      color: #e6f0f5;
+    }
+
+    main {
+      margin-top: 24px;
+    }
+
+    section {
+      margin-bottom: 22px;
+      padding: 26px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      padding-bottom: 10px;
+      color: var(--primary);
+      font-size: 1.45rem;
+      border-bottom: 2px solid var(--primary-soft);
+    }
+
+    h3 {
+      margin: 22px 0 8px;
+      color: #294f65;
+      font-size: 1.12rem;
+    }
+
+    h3:first-child {
+      margin-top: 0;
+    }
+
+    p {
+      margin: 8px 0;
+    }
+
+    ul {
+      margin: 8px 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 7px 0;
+    }
+
+    .summary-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .summary-list li {
+      margin: 0;
+      padding: 14px 16px;
+      background: var(--primary-soft);
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+    }
+
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 680px;
+      border-collapse: collapse;
+      background: #ffffff;
+    }
+
+    th,
+    td {
+      padding: 13px 14px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: #ffffff;
+      background: var(--primary);
+      font-size: 0.92rem;
+      font-weight: 650;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tbody tr:nth-child(even) {
+      background: var(--neutral-bg);
+    }
+
+    .empty-state {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .theme {
+      margin-top: 18px;
+      padding: 18px;
+      background: var(--neutral-bg);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+    }
+
+    .theme:first-of-type {
+      margin-top: 0;
+    }
+
+    .theme h3 {
+      margin-top: 0;
+    }
+
+    .theme-summary {
+      color: var(--muted);
+    }
+
+    .warning-list {
+      padding: 0;
+      list-style: none;
+    }
+
+    .warning-list li {
+      padding: 13px 15px;
+      background: var(--warning-bg);
+      border-left: 4px solid var(--warning-border);
+      border-radius: 7px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 3px 9px;
+      color: #59420c;
+      background: #fff0bd;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .note {
+      padding: 14px 16px;
+      color: var(--muted);
+      background: var(--neutral-bg);
+      border-left: 4px solid #94a3ad;
+      border-radius: 7px;
+    }
+
+    footer {
+      padding: 8px 0 28px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 720px) {
+      .container {
+        width: min(100% - 20px, 1120px);
+        margin-top: 10px;
+      }
+
+      header,
+      section {
+        padding: 20px;
+        border-radius: 10px;
+      }
+
+      .summary-list {
+        grid-template-columns: 1fr;
+      }
+
+      h2 {
+        font-size: 1.3rem;
+      }
+
+      th,
+      td {
+        padding: 11px 12px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+      }
+
+      .container {
+        width: 100%;
+        margin: 0;
+      }
+
+      header,
+      section {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Rapport de réunion — Périmètre et usage de l’outil</h1>
+      <p>Échanges sur le rôle de l’outil, la conservation des informations de réunion, les options techniques et l’exigence d’une utilisation accessible.</p>
+    </header>
+
+    <main>
+      <section>
+        <h2>Synthèse</h2>
+        <ul class="summary-list">
+          <li>Le moment et le mode d’utilisation de l’outil restent à définir : pendant une réunion, à sa fin ou en accompagnement de plusieurs réunions.</li>
+          <li>La portée fonctionnelle est ouverte entre une trace de réunion et une base de travail de type Notion, éventuellement mise à jour dans la durée.</li>
+          <li>Les notes doivent préserver les idées exprimées et non abandonnées, y compris lorsqu’elles sont reprises sous des noms différents.</li>
+          <li>Une solution fondée sur un fichier JSON par projet a été évoquée, avec une contrainte possible de téléchargement et de réimportation.</li>
+          <li>L’accessibilité de l’interface et la simplicité d’usage sont considérées comme essentielles.</li>
+          <li>Aucune décision fonctionnelle ou technique définitive n’a été clairement établie.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Décisions</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Décision</th>
+                <th>Contexte / justification</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="empty-state">Aucune décision clairement établie</td>
+                <td>Les échanges ont principalement porté sur des besoins, des questions de périmètre, des exemples et une option technique.</td>
+                <td><span class="status">À définir</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Actions</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Responsable</th>
+                <th>Échéance</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Clarifier à quel moment l’outil doit être utilisé : en cours de réunion, à la fin ou en accompagnement de toutes les réunions.</td>
+                <td>Non précisé</td>
+                <td>Non précisé</td>
+                <td><span class="status">À clarifier</span></td>
+              </tr>
+              <tr>
+                <td>Définir si l’outil doit produire une trace ponctuelle ou devenir une base consultable de type Notion Database, éventuellement avec un historique.</td>
+                <td>Non précisé</td>
+                <td>Non précisé</td>
+                <td><span class="status">À clarifier</span></td>
+              </tr>
+              <tr>
+                <td>Préciser comment conserver les idées exprimées et non abandonnées malgré les variations de nommage.</td>
+                <td>Non précisé</td>
+                <td>Non précisé</td>
+                <td><span class="status">À clarifier</span></td>
+              </tr>
+              <tr>
+                <td>Déterminer comment l’avancement d’une tâche réalisé pendant ou entre les réunions pourrait être reflété dans l’outil.</td>
+                <td>Non précisé</td>
+                <td>Non précisé</td>
+                <td><span class="status">Question ouverte</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Questions et points à résoudre</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Question / problème</th>
+                <th>Prochaine étape éventuelle</th>
+                <th>Responsable éventuel</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Quel est le moment d’utilisation cible de l’outil ?</td>
+                <td>Choisir entre un usage en cours de réunion, en fin de réunion ou sur l’ensemble des réunions.</td>
+                <td>Non précisé</td>
+              </tr>
+              <tr>
+                <td>L’outil doit-il rester un outil de compte rendu ou devenir une application de productivité mise à jour dans la durée ?</td>
+                <td>Délimiter explicitement le périmètre fonctionnel.</td>
+                <td>Non précisé</td>
+              </tr>
+              <tr>
+                <td>Doit-il offrir une base de type Notion permettant de consulter l’état final des réunions et, éventuellement, leur historique ?</td>
+                <td>Préciser le modèle de consultation et de conservation des données.</td>
+                <td>Non précisé</td>
+              </tr>
+              <tr>
+                <td>Comment éviter qu’une idée exprimée mais non abandonnée soit omise ou mal rapprochée à cause d’un nom différent ?</td>
+                <td>Définir les règles de conservation et de rapprochement des idées.</td>
+                <td>Non précisé</td>
+              </tr>
+              <tr>
+                <td>Comment mettre à jour les données sans imposer à l’utilisateur de télécharger puis de réimporter un fichier JSON ?</td>
+                <td>Évaluer l’option JSON au regard de l’objectif de fluidité d’usage.</td>
+                <td>Non précisé</td>
+              </tr>
+              <tr>
+                <td>Comment refléter automatiquement l’avancement des tâches réalisé pendant ou entre les réunions ?</td>
+                <td>Fonctionnement à définir si cette capacité reste dans le périmètre.</td>
+                <td>Non précisé</td>
+              </tr>
+              <tr>
+                <td>Quel niveau de richesse d’interface reste compatible avec des utilisateurs peu familiers de l’informatique ?</td>
+                <td>Évaluer la simplicité de l’interface avant d’ajouter des fonctionnalités.</td>
+                <td>Non précisé</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Discussion par thème</h2>
+
+        <article class="theme">
+          <h3>1. Positionnement et moment d’utilisation</h3>
+          <p class="theme-summary">Le rôle exact de l’outil n’est pas arrêté.</p>
+          <ul>
+            <li>Plusieurs moments d’usage ont été envisagés : au milieu d’une réunion, à sa fin ou en accompagnement de toutes les réunions.</li>
+            <li>Une interrogation subsiste entre une trace ponctuelle et une base persistante permettant de consulter l’état obtenu à la fin des réunions.</li>
+            <li>Un risque d’élargissement du périmètre a été signalé : passer d’un outil centré sur les réunions à une application de productivité mise à jour automatiquement.</li>
+          </ul>
+        </article>
+
+        <article class="theme">
+          <h3>2. Complétude et structuration des idées</h3>
+          <p class="theme-summary">La restitution doit éviter de perdre des idées pertinentes ou de les fragmenter à cause de variations de formulation.</p>
+          <ul>
+            <li>Les idées exprimées et non abandonnées devraient être conservées.</li>
+            <li>Le relevé ne doit pas être incomplet.</li>
+            <li>Une même idée peut être mentionnée sous plusieurs noms, ce qui crée un problème de repérage et de rapprochement.</li>
+          </ul>
+        </article>
+
+        <article class="theme">
+          <h3>3. Référence à un fonctionnement de type Notion</h3>
+          <p class="theme-summary">Un exemple de base Notion a servi à illustrer les capacités possibles et leurs limites opérationnelles.</p>
+          <ul>
+            <li>Notion a été décrit comme un « Excel boosté » reposant sur des bases, des colonnes réorganisables, des filtres et des vues telles que le Kanban.</li>
+            <li>Les exemples cités comprennent l’attribution de tâches, leur urgence, leurs échéances et les personnes associées.</li>
+            <li>Une base de gestion du matériel permettait de suivre les objets, leur détenteur, leur localisation et différents états comme construit, perdu ou soldé.</li>
+            <li>Une base documentaire s’est révélée peu efficace en raison de la charge de mise à jour manuelle.</li>
+            <li>Malgré des fiches pas à pas, la maintenance finissait par dépendre d’une mise à jour effectuée par chaque personne.</li>
+          </ul>
+        </article>
+
+        <article class="theme">
+          <h3>4. Option technique fondée sur des fichiers JSON</h3>
+          <p class="theme-summary">Une option technique limitée a été évoquée sans être retenue comme décision.</p>
+          <ul>
+            <li>L’option consisterait à générer un fichier JSON par projet, éventuellement un fichier volumineux mis à jour.</li>
+            <li>Cette approche pourrait obliger l’utilisateur à retélécharger le fichier et à le réimporter.</li>
+            <li>La création d’un nouveau fichier ou objet a également été évoquée comme possibilité.</li>
+            <li>Aucun mécanisme complet de base de données ou de synchronisation n’a été établi.</li>
+          </ul>
+        </article>
+
+        <article class="theme">
+          <h3>5. Accessibilité et simplicité de l’interface</h3>
+          <p class="theme-summary">La facilité d’utilisation est présentée comme une contrainte centrale.</p>
+          <ul>
+            <li>L’utilisateur ne devrait pas avoir à télécharger un fichier puis à se débrouiller pour le réutiliser.</li>
+            <li>L’usage visé doit être fluide dès l’ouverture de Notion.</li>
+            <li>Une interface enrichie peut devenir trop complexe, submerger l’utilisateur et rendre l’outil inadapté.</li>
+            <li>L’expérience évoquée avec des personnes ayant très peu de connaissances informatiques renforce le besoin d’une interface extrêmement abordable.</li>
+          </ul>
+        </article>
+
+        <article class="theme">
+          <h3>6. Mise à jour des tâches et synchronisation</h3>
+          <p class="theme-summary">La mise à jour continue des informations soulève une question de périmètre et de fonctionnement.</p>
+          <ul>
+            <li>Si une personne avance sur une tâche pendant ou entre les réunions, la manière dont cet avancement serait reflété reste à définir.</li>
+            <li>Une mise à jour automatique rapprocherait l’outil d’une application de productivité plutôt que d’un outil uniquement centré sur les réunions.</li>
+            <li>Aucune solution de synchronisation n’a été précisée.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section>
+        <h2>Points de vigilance</h2>
+        <ul class="warning-list">
+          <li><strong>Perte d’information :</strong> risque d’omettre des idées exprimées et non abandonnées ou de ne pas reconnaître une idée reformulée sous un autre nom.</li>
+          <li><strong>Élargissement du périmètre :</strong> risque de transformer progressivement l’outil en application complète de productivité et de suivi des tâches.</li>
+          <li><strong>Complexité de l’interface :</strong> une interface plus riche peut submerger des utilisateurs peu à l’aise avec l’informatique.</li>
+          <li><strong>Charge de maintenance :</strong> une mise à jour manuelle et répartie entre les personnes peut être difficile à maintenir dans la durée.</li>
+          <li><strong>Friction liée aux fichiers JSON :</strong> le téléchargement et la réimportation régulière sont en contradiction avec l’objectif d’un usage fluide.</li>
+          <li><strong>Synchronisation non définie :</strong> aucune méthode n’a été établie pour refléter les changements réalisés pendant ou entre les réunions.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Prochaines étapes</h2>
+        <ul>
+          <li>Clarifier le moment d’utilisation de l’outil.</li>
+          <li>Délimiter son rôle entre restitution de réunion, base de connaissance et application de productivité.</li>
+          <li>Préciser le niveau de persistance attendu : état final, historique ou suivi continu.</li>
+          <li>Définir la manière de conserver et de rapprocher les idées exprimées sous des formulations différentes.</li>
+          <li>Examiner la compatibilité de l’option JSON avec l’exigence d’une utilisation simple, sans téléchargements ni réimportations répétées.</li>
+          <li>Clarifier le traitement des mises à jour de tâches réalisées pendant ou entre les réunions.</li>
+        </ul>
+        <p class="note">Aucun responsable, aucune échéance et aucune prochaine réunion n’ont été précisés.</p>
+      </section>
+    </main>
+
+    <footer>
+      Rapport structuré à partir des éléments fournis.
+    </footer>
+  </div>
+</body>
+</html>
