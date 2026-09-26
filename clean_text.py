@@ -91,7 +91,83 @@ def normalize_marker_speaker_block(text: str) -> str:
 
     return "\n".join(lines).strip()
 
+def get_last_speaker_turns(text: str, n: int = 2) -> str:
+    """
+    Return the last n complete speaker turns from a transcript.
+    Speaker turns are separated by blank lines.
+    """
+    blocks = [
+        block.strip()
+        for block in re.split(r"\n\s*\n+", text.strip())
+        if block.strip()
+    ]
 
+    return "\n\n".join(blocks[-n:])
+
+
+def extract_segment(paths: List[Path]) -> Tuple[str, str]:
+    """
+    Return:
+        previous_context, current_chunk
+
+    1 file:
+        current_chunk = beginning -> first '#'
+        previous_context = ""
+
+    2 files:
+        previous_context = last 2 speaker turns before '#' in file 1
+        current_chunk = from '#' in file 1 -> before '#' in file 2
+    """
+    if len(paths) not in (1, 2):
+        raise ValueError("Use exactly 1 or 2 input files.")
+
+    first = read_text(paths[0])
+
+    # ---------------------------------------------------------------
+    # One file
+    # ---------------------------------------------------------------
+    if len(paths) == 1:
+        marker = find_marker_line(first)
+
+        if marker == -1:
+            return "", first.strip()
+
+        current_chunk = first[:marker].strip()
+        return "", current_chunk
+
+    # ---------------------------------------------------------------
+    # Two files
+    # ---------------------------------------------------------------
+    second = read_text(paths[1])
+
+    marker1 = find_marker_line(first)
+    marker2 = find_marker_line(second)
+
+    if marker1 == -1:
+        raise ValueError(f"No '#' marker found in first file: {paths[0]}")
+    if marker2 == -1:
+        raise ValueError(f"No '#' marker found in second file: {paths[1]}")
+
+    # Everything before # in file 1 belongs to the previous chunk.
+    previous_chunk = first[:marker1].strip()
+
+    # Current chunk starts at # in file 1.
+    part1 = normalize_marker_speaker_block(first[marker1:])
+
+    # Continue through the beginning of file 2.
+    part2 = second[:marker2].strip()
+
+    if part1 and part2:
+        current_chunk = part1 + "\n\n" + part2
+    else:
+        current_chunk = part1 or part2
+
+    previous_context = get_last_speaker_turns(previous_chunk, n=2)
+
+    return previous_context, current_chunk
+
+
+'''
 def extract_segment(paths: List[Path]) -> str:
     if len(paths) not in (1, 2):
         raise ValueError("Use exactly 1 or 2 input files.")
@@ -125,7 +201,7 @@ def extract_segment(paths: List[Path]) -> str:
         return part1
 
     return part1 + "\n\n" + part2
-
+'''
 
 # ---------------------------------------------------------------------------
 # Model prompt + output schema
@@ -293,7 +369,7 @@ OUTPUT_SCHEMA = {
 # OpenAI
 # ---------------------------------------------------------------------------
 
-def clean_with_openai(text: str, model: str) -> List[dict]:
+def clean_with_openai(text: str, previous_context: str, model: str) -> List[dict]:
     api_key = os.getenv("OPENAI_API_KEY")
 
     if not api_key:
@@ -304,6 +380,50 @@ def clean_with_openai(text: str, model: str) -> List[dict]:
 
     client = OpenAI(api_key=api_key)
 
+    response = client.responses.create(
+    model=model,
+    reasoning={"effort": "none"},
+    instructions=SYSTEM_PROMPT,
+    input=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "input_text",
+                    "text": (
+                        "CONTEXTE DU CHUNK PRÉCÉDENT\n"
+                        "Utilise uniquement ce contexte pour comprendre "
+                        "les références et la continuité de la conversation. "
+                        "Ne le reproduis pas dans la sortie.\n\n"
+                        f"{previous_context}"
+                    ),
+                }
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "input_text",
+                    "text": (
+                        "CHUNK À TRAITER\n"
+                        "Seul ce texte doit être représenté dans la sortie.\n\n"
+                        f"{text}"
+                    ),
+                }
+            ],
+        },
+    ],
+    text={
+        "format": {
+            "type": "json_schema",
+            "name": "meeting_thought_units",
+            "strict": True,
+            "schema": OUTPUT_SCHEMA,
+        }
+    },
+)
+    '''
     response = client.responses.create(
         model=model,
         reasoning={"effort": "none"},
@@ -318,7 +438,7 @@ def clean_with_openai(text: str, model: str) -> List[dict]:
             }
         },
     )
-
+    '''
     try:
         data = json.loads(response.output_text)
     except json.JSONDecodeError as exc:
@@ -327,7 +447,7 @@ def clean_with_openai(text: str, model: str) -> List[dict]:
         ) from exc
 
     return validate_blocks(data)
-
+    
 
 # ---------------------------------------------------------------------------
 # Ollama
@@ -489,7 +609,7 @@ def main() -> int:
             return 1
 
     try:
-        segment = extract_segment(args.files)
+        previous_context, segment = extract_segment(args.files)
     except (OSError, ValueError) as exc:
         print(f"Erreur d'extraction: {exc}", file=sys.stderr)
         return 1
@@ -502,7 +622,7 @@ def main() -> int:
         if args.mode == "api":
             model = args.model or DEFAULT_OPENAI_MODEL
             print(f"Modèle: {model}")
-            blocks = clean_with_openai(segment, model)
+            blocks = clean_with_openai(segment, previous_context, model)
         else:
             model = args.model or DEFAULT_OLLAMA_MODEL
             print(f"Modèle: {model}")

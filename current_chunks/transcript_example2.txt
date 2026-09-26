@@ -1,0 +1,27 @@
+<A>
+parce que c'est pas super complet. Il faut mettre les idées qui ont été dites ou mises, qui n'ont été pas abandonnées, peut-être qu'il y a des idées qui sont dites mais qui revêtent son nom. En fait, c'est ça le souci, parce que si jamais... Je ne sais pas...Pas qu'on rentre. En fait, le souci pour moi, c'est qu'à la fois... Attends, j'ai essayé de dire plusieurs trucs en vrac. Le 1er, c'est qu'il faut qu'on clarifie quand cet outil est utilisé. Est-ce que c'est un outil qu'on utilise à la mi-réunion, un outil qu'on utilise à la fin de la réunion, un outil qui nous accompagne sur toutes les réunions ? 
+
+<B>
+Oui, 
+
+<A>
+mais est-ce que ça accompagne sur tout, au sens où ça devient par exemple une espèce de Notion Database et je peux vous montrer ce qu'il y avait à la fin de la réunion ? Oui, mais est-ce que ça accompagne sur tout, au sens où ça devient par exemple une espèce de Notion Database et je peux vous montrer ce qu'il y avait à la fin de la réunion ? Oui, mais est-ce que ça accompagne sur tout, au sens où ça devient par exemple une espèce de Notion Database et je peux vous montrer ce que j'avais à la fin de la réunion ? Oui, mais est-ce que ça accompagne sur tout, au sens où ça devient par exemple une espèce de Notion Database et je peux vous montrer ce que j'avais à la fin de la réunion ? Oui, mais est-ce que ça accompagne sur tout, au sens où ça devient par exemple une espèce de Notion Database et je peux vous montrer ce que j'avais à la fin de la réunion ? Oui, mais est-ce que ça accompagne sur tout, au sens où ça devient par exemple une espèce de Notion Database et je peux vous montrer ce que j'avais à la fin de la réunion ? Oui, mais est-ce que ça accompagne sur tout, au sens où ça devient par exemple une espèce de Notion Database et je peux vous montrer ce que j'avais à la fin de la réunion ? Oui, mais est Mes élèves, enfin ce que j'ai construit pour mes élèves l'année dernière, c'était Infernal, voilà, alors est-ce que j'ai accès sur ce compte-ci ? Eh mince, j'ai pas accès, je vais retrouver ça, en gros c'était genre Notion, c'est une espèce de Excel boosté de Fous Furieux, où t'as ce qu'on appelle des Databases, ça marche un peu comme des Excel, sauf que tu peux réorganiser les colonnes, les filtrer, faire des Views, genre du Kanban, etc., genre super interactif et tout.Attribuer des tâches, etc. Et du coup typiquement ce qu'on avait c'était une database, on avait genre 3 databases, une c'était gestion du matos, genre chaque objet qu'on possédait, qui l'avait, il était dans quel état, genre construit, perdu, chez quelqu'un, genre soldered, enfin on travaillait sur des Raspberry Pi et du vrai matériel, donc c'était vraiment physiquement le parachute il est où, est-ce qu'il a été construit, est-ce qu'il est chez Marc, est-ce qu'il est chez... Voilà. On avait un Excel avec toutes nos tâches, toutes les tâches c'était urgences, deadlines, personnes, différents trucs. Et après il y avait une database des documents, mais ça, ça concernera pas du tout cet objet. Ça marchait pas de fou, parce que la contrainte logistique d'updater ça à la main était énorme, même en faisant des fiches pas à pas, je galérais à faire que les terminales respectent le truc, et finalement c'était update par personne.
+
+<B>
+Limite, le plus qu'on peut faire, c'est qu'on peut faire, euh, des, des Json par projet, genre en bas de. Tu peux avoir juste un très gros Json qui est update ou sur rien d'autre.
+
+<A>
+Ouais. 
+
+<B>
+Et parce que du coup ça implique que t'ailles le retélécharger à chaque fois. Ouais. Et le remettre dedans si ça n'est pas compliqué, sauf si tu veux en créer un nouveau.Après, j'ai l'impression de dire 
+
+<A>
+Ouais, après, le, le, en fait, je sais pas comment dire, j'aime bien l'idée, euh, y a la contrainte du fait que l'utilisateur doit continuer à trouver ça abordable, genre, je, je vais te montrer, quand, dès que j'arrive à créer, me, à ouvrir le Notion, à quoi ça peut ressembler très vite, ouais, après, euh, l'utilisateur a pas besoin d'aller télécharger le truc et de l'embêter, non, mais, ce que je veux dire, c'est que, quoi que tu fasses ennui, c'est que, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, c'est, cEt typiquement, je pense, quand on ne va jamais réussir à faire une UI plus balaise que ce qu'il y avait, quoi qu'on fasse en UI, ça peut très vite submerger l'utilisateur et rendre l'outil... 
+
+<B>
+Oui, je sais, tu sais, j'ai dû faire enseigner une UI extrêmement abordable pendant mon stage aussi, puisqu'il y avait des gens, ils étaient... Ils ne connaissaient vraiment rien en info...
+
+<A>
+Mais du coup, en fait, le souci que j'ai, c'est que on est en train de s'éloigner d'un transcripteur de réunion vers une application de productivité qui s'update toute seule quand on a une réunion, et typiquement, si quelqu'un avance sur n'importe laquelle des tâches, oh, attends, je. 
+  
