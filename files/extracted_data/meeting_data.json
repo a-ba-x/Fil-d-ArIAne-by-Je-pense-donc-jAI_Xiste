@@ -1,0 +1,159 @@
+{
+  "tache-date-1": {
+    "type": "tache",
+    "parent": null,
+    "completed": false,
+    "argv": {
+      "titre": "Préparer le premier numéro",
+      "qui": null,
+      "quand": null,
+      "statut": "a_faire"
+    }
+  },
+  "tache-date-2": {
+    "type": "tache",
+    "parent": "tache-date-1",
+    "completed": false,
+    "argv": {
+      "titre": "Présenter trois initiatives locales",
+      "qui": null,
+      "quand": null,
+      "statut": "a_faire"
+    }
+  },
+  "tache-date-3": {
+    "type": "tache",
+    "parent": "tache-date-2",
+    "completed": false,
+    "argv": {
+      "titre": "Choisir les trois initiatives à mettre en avant",
+      "qui": null,
+      "quand": null,
+      "statut": "a_faire"
+    }
+  },
+  "tache-date-4": {
+    "type": "tache",
+    "parent": "tache-date-1",
+    "completed": false,
+    "argv": {
+      "titre": "Annoncer les activités de novembre",
+      "qui": null,
+      "quand": null,
+      "statut": "a_faire"
+    }
+  },
+  "tache-date-5": {
+    "type": "tache",
+    "parent": "tache-date-1",
+    "completed": false,
+    "argv": {
+      "titre": "Inclure un court éditorial d’introduction",
+      "qui": null,
+      "quand": null,
+      "statut": "a_faire"
+    }
+  },
+  "tache-date-6": {
+    "type": "tache",
+    "parent": null,
+    "completed": false,
+    "argv": {
+      "titre": "Rédiger le texte de présentation de la newsletter",
+      "qui": null,
+      "quand": null,
+      "statut": "a_faire"
+    }
+  },
+  "tache-date-7": {
+    "type": "tache",
+    "parent": "tache-date-6",
+    "completed": false,
+    "argv": {
+      "titre": "Faire relire le texte de présentation",
+      "qui": null,
+      "quand": null,
+      "statut": "a_faire"
+    }
+  },
+  "tache-date-8": {
+    "type": "tache",
+    "parent": null,
+    "completed": false,
+    "argv": {
+      "titre": "Mettre en place un formulaire d’inscription sur le site de l’association",
+      "qui": null,
+      "quand": null,
+      "statut": "a_faire"
+    }
+  },
+  "tache-date-9": {
+    "type": "tache",
+    "parent": "tache-date-8",
+    "completed": false,
+    "argv": {
+      "titre": "Créer une première version du formulaire d’inscription",
+      "qui": null,
+      "quand": null,
+      "statut": "a_faire"
+    }
+  },
+  "tache-date-10": {
+    "type": "tache",
+    "parent": "tache-date-8",
+    "completed": false,
+    "argv": {
+      "titre": "Vérifier que le formulaire respecte les règles de confidentialité",
+      "qui": null,
+      "quand": null,
+      "statut": "a_faire"
+    }
+  },
+  "tache-date-11": {
+    "type": "tache",
+    "parent": "tache-date-8",
+    "completed": false,
+    "argv": {
+      "titre": "Préciser comment les abonnés pourront se désinscrire",
+      "qui": null,
+      "quand": null,
+      "statut": "a_faire"
+    }
+  },
+  "evenement-date-1": {
+    "type": "evenement",
+    "parent": null,
+    "completed": false,
+    "argv": {
+      "titre": "Prochaine réunion de préparation",
+      "date": null
+    }
+  },
+  "evenement-date-2": {
+    "type": "evenement",
+    "parent": null,
+    "completed": false,
+    "argv": {
+      "titre": "Lancement de la newsletter",
+      "date": null
+    }
+  },
+  "evenement-date-3": {
+    "type": "evenement",
+    "parent": null,
+    "completed": false,
+    "argv": {
+      "titre": "Envoi mensuel de la newsletter le premier jeudi de chaque mois",
+      "date": null
+    }
+  },
+  "evenement-date-4": {
+    "type": "evenement",
+    "parent": "evenement-date-3",
+    "completed": false,
+    "argv": {
+      "titre": "Envoi de la première édition",
+      "date": null
+    }
+  }
+}
