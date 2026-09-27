@@ -1,0 +1,17 @@
+[19:07:09] Recording and transcription started for C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_4.
+[19:07:10] Recording C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_4\files\audio\audio0.wav...
+Recording saved to C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_4\files\audio\audio0.wav
+[19:07:26] Transcribing C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_4\files\audio\audio0.wav...
+[19:07:35] Transcription complete: transcript0.txt
+[19:07:35] [CLEAN] Starting cleaning...
+Fichiers sélectionnés :
+  transcript_context.txt
+  transcript0.txt
+Ajouté au fichier brut : transcript_context.txt
+Bloc extrait: ~13 mots
+AI: api
+Modèle: gpt-5.4-nano
+Fichier supprimé : transcript_context.txt
+
+Fichier mis à jour: C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_4\files\extracted_data\whole_clean_text.txt
+[19:07:45] [CLEAN] Cleaning complete.

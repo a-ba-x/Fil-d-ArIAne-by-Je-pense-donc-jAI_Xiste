@@ -8,14 +8,22 @@ Lancement : python3 app.py
 
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-import webbrowser
+import importlib
+import re
+import subprocess
+import sys
 import threading
+import webbrowser
+
+try:
+    from tkinterweb import HtmlFrame
+except ImportError:
+    HtmlFrame = None
 
 from ui import projects, tasks, search, calendar_export, storage, pipeline_hooks
 
 STATUS_LABELS = {"running": "🔴 En cours", "paused": "⏸️ En pause", "stopped": "⏹️ Arrêté"}
 TASK_ARGV_FIELDS = ["titre", "qui", "quand", "statut"]
-
 
 class MeetingApp(tk.Tk):
     def __init__(self):
@@ -648,13 +656,42 @@ class ResumesTab(ttk.Frame):
         main.pack(side="left", fill="both", expand=True)
         self.info_label = ttk.Label(main, text="Sélectionnez un compte rendu.")
         self.info_label.pack(anchor="w", pady=(4, 12))
-        self.open_btn = ttk.Button(
-            main,
-            text="Ouvrir le compte rendu dans le navigateur",
-            command=self._open_selected,
+        self.viewer_controls = ttk.Frame(main)
+        self.viewer_controls.pack(fill="x", pady=(0, 6))
+        self.install_viewer_btn = ttk.Button(
+            self.viewer_controls,
+            text="Installer le visualiseur",
+            command=self._install_viewer,
+        )
+        self.browser_btn = ttk.Button(
+            self.viewer_controls,
+            text="Ouvrir la mise en page complète dans le navigateur",
+            command=self._open_selected_in_browser,
             state="disabled",
         )
-        self.open_btn.pack(anchor="w")
+        if HtmlFrame is None:
+            self.report_view = None
+            self.install_viewer_btn.pack(side="left", padx=(0, 6))
+            self.browser_btn.pack(side="left")
+            self.viewer_message = ttk.Label(
+                main,
+                text="Installez le visualiseur pour lire le rapport dans cet onglet, "
+                     "ou sélectionnez un rapport puis ouvrez-le dans le navigateur.",
+                wraplength=700,
+                justify="left",
+            )
+            self.viewer_message.pack(fill="both", expand=True, anchor="nw", padx=8, pady=8)
+        else:
+            self.install_viewer_btn.pack_forget()
+            self.browser_btn.pack(side="left")
+            self.report_view = HtmlFrame(
+                main,
+                zoom=0.85,
+                messages_enabled=False,
+                javascript_enabled=False,
+                stylesheets_enabled=True,
+            )
+            self.report_view.pack(fill="both", expand=True)
 
     def refresh(self, project_id):
         previous_path = self._selected_path()
@@ -671,7 +708,11 @@ class ResumesTab(ttk.Frame):
         )
         if selected_index is None:
             self.info_label.config(text="Aucun compte rendu archivé pour ce projet.")
-            self.open_btn.config(state="disabled")
+            self.browser_btn.config(state="disabled")
+            if self.report_view is not None:
+                self.report_view.load_html(
+                    "<html><body><p>Aucun compte rendu archivé pour ce projet.</p></body></html>"
+                )
             return
         self.report_list.selection_clear(0, "end")
         self.report_list.selection_set(selected_index)
@@ -692,12 +733,82 @@ class ResumesTab(ttk.Frame):
         if path is None:
             return
         self.info_label.config(text=f"Compte rendu : {path.name}")
-        self.open_btn.config(state="normal")
+        self.browser_btn.config(state="normal" if path.is_file() else "disabled")
+        if self.report_view is not None and path.is_file():
+            try:
+                self._load_report_preview(path)
+            except Exception as exc:
+                self.report_view.load_html(
+                    "<html><body><h2>Impossible d'afficher ce rapport</h2>"
+                    f"<p>{str(exc)}</p></body></html>"
+                )
 
-    def _open_selected(self):
+    def _load_report_preview(self, path):
+        source = path.read_text(encoding="utf-8")
+        preview_styles = (
+            "<style>.sidebar { display: none; } "
+            ".content { margin-left: 0; }</style>"
+        )
+        head_end = re.search(r"</head\s*>", source, flags=re.IGNORECASE)
+        if head_end:
+            source = source[:head_end.start()] + preview_styles + source[head_end.start():]
+        else:
+            source = preview_styles + source
+        base_url = path.resolve().parent.as_uri() + "/"
+        self.report_view.load_html(source, base_url=base_url)
+
+    def _open_selected_in_browser(self):
         path = self._selected_path()
         if path and path.is_file():
             webbrowser.open(path.resolve().as_uri())
+
+    def _install_viewer(self):
+        self.install_viewer_btn.config(state="disabled", text="Installation en cours…")
+        self.info_label.config(text="Installation de TkinterWeb dans l'environnement Python de l'application…")
+
+        def install():
+            try:
+                result = subprocess.run(
+                    [sys.executable, "-m", "pip", "install", "tkinterweb[recommended]"],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=300,
+                    check=False,
+                )
+                if result.returncode:
+                    detail = result.stderr.strip() or result.stdout.strip()
+                    raise RuntimeError(detail[-2500:] or f"pip exited with {result.returncode}")
+                importlib.invalidate_caches()
+                frame_class = importlib.import_module("tkinterweb").HtmlFrame
+            except Exception as exc:
+                self.after(0, lambda error=str(exc): self._viewer_install_failed(error))
+                return
+            self.after(0, lambda: self._viewer_install_succeeded(frame_class))
+
+        threading.Thread(target=install, daemon=True).start()
+
+    def _viewer_install_failed(self, detail):
+        self.install_viewer_btn.config(state="normal", text="Réessayer l'installation")
+        self.info_label.config(text="Installation échouée ; vous pouvez toujours ouvrir le rapport dans le navigateur.")
+        messagebox.showerror("Installation du visualiseur", detail or "Installation impossible.")
+
+    def _viewer_install_succeeded(self, frame_class):
+        global HtmlFrame
+        HtmlFrame = frame_class
+        self.viewer_message.destroy()
+        self.install_viewer_btn.pack_forget()
+        self.report_view = HtmlFrame(
+            self.viewer_controls.master,
+            zoom=0.85,
+            messages_enabled=False,
+            javascript_enabled=False,
+            stylesheets_enabled=True,
+        )
+        self.report_view.pack(fill="both", expand=True)
+        self.info_label.config(text="Visualiseur installé.")
+        self._show_selected()
 
 class ConfigTab(ttk.Frame):
     API_PROVIDERS = ["openai", "anthropic", "azure", "google", "whisper", "whisperx", "gradium"]
