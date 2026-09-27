@@ -40,5 +40,5 @@ def transcribe_audio(audio_path, filename):
         if message.get("type") == "text":
             transcript_parts.append(message.get("text", "")+" ")
 
-    with open(filename, "a", encoding="utf-8") as file:
+    with open(filename, "w", encoding="utf-8") as file:
         file.write("".join(transcript_parts))

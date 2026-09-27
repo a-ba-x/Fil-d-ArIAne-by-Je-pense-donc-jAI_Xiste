@@ -72,18 +72,17 @@ OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/chat")
 # ---------------------------------------------------------------------------
 # Append text to raw text file
 # ---------------------------------------------------------------------------
-def append_raw_text(path: Path) -> None:
-    RAW_TEXT_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+def append_raw_text(path: Path, raw_text_output: Path) -> None:
+    raw_text_output.parent.mkdir(parents=True, exist_ok=True)
 
     text = path.read_text(encoding="utf-8-sig")
 
     if not text.strip():
         return
 
-    with RAW_TEXT_OUTPUT.open("a", encoding="utf-8") as f:
-        if RAW_TEXT_OUTPUT.stat().st_size > 0:
+    with raw_text_output.open("a", encoding="utf-8") as f:
+        if raw_text_output.stat().st_size > 0:
             f.write("\n\n")
-
         f.write(text.rstrip())
         f.write("\n")
 
@@ -544,13 +543,8 @@ def main() -> int:
         help="Input transcript contains speaker labels.",
     )
 
-    parser.add_argument(
-    "-o",
-    "--output",
-    type=Path,
-    default=CLEAN_TEXT_OUTPUT,
-    help="Output file",     
-    )
+    parser.add_argument("-o", "--output", type=Path, default=None, help="Output file")
+    # Keep the --project-dir argument.
 
     parser.add_argument(
         "--model",
@@ -558,15 +552,28 @@ def main() -> int:
         help="Override the model for the selected mode.",
     )
 
+    parser.add_argument(
+    "--project-dir",
+    type=Path,
+    default=REPO_ROOT,
+    help="Project directory containing files/.",
+    )
+
     args = parser.parse_args()
 
+    files_dir = args.project_dir / "files"
+    input_folder = files_dir / "raw_text_chunks"
+    raw_text_output = files_dir / "backup" / "whole_raw_text.txt"
+    clean_text_output = args.output or (
+    files_dir / "extracted_data" / "whole_clean_text.txt"
+    )
     # ---------------------------------------------------------------------------
     # Select input files
     # ---------------------------------------------------------------------------
     files = sorted(
     (
         path
-        for path in INPUT_FOLDER.glob("*.txt")
+        for path in input_folder.glob("*.txt")
         if path.is_file()
     ),
     key=lambda path: path.stat().st_ctime,
@@ -586,7 +593,7 @@ def main() -> int:
     # ---------------------------------------------------------------------------
     # Update whole_raw_text.txt with the new chunk
     # ---------------------------------------------------------------------------
-    append_raw_text(files[0])
+    append_raw_text(files[0], raw_text_output)
     print(f"Ajouté au fichier brut : {files[0].name}")
 
     # ---------------------------------------------------------------------------
@@ -672,17 +679,20 @@ def main() -> int:
     result = format_output(blocks)
 
     try:
-        CLEAN_TEXT_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+        clean_text_output.parent.mkdir(parents=True, exist_ok=True)
 
-        with CLEAN_TEXT_OUTPUT.open("a", encoding="utf-8") as f:
-            if CLEAN_TEXT_OUTPUT.stat().st_size > 0:
+        with clean_text_output.open("a", encoding="utf-8") as f:
+            if clean_text_output.stat().st_size > 0:
                 f.write("\n\n")
             f.write(result.rstrip())
             f.write("\n")
 
         # Delete the oldest transcript only after successful cleaning
-        files[0].unlink()
-        print(f"Fichier supprimé : {files[0].name}")
+        if len(files) > 1:
+            files[0].unlink()
+            print(f"Fichier supprimé : {files[0].name}")
+        else:
+            print(f"Fichier conservé comme contexte : {files[0].name}")
 
     except OSError as exc:
         print(f"Erreur d'écriture: {exc}", file=sys.stderr)
@@ -690,7 +700,7 @@ def main() -> int:
 
     
 
-    print(f"\nFichier mis à jour: {CLEAN_TEXT_OUTPUT}")
+    print(f"\nFichier mis à jour: {clean_text_output}")
     return 0
 
 

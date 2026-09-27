@@ -10,7 +10,7 @@ from ui import projects
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 APP_ROOT = SCRIPTS_DIR.parent
-TRANSCRIPTION_SCRIPT = SCRIPTS_DIR / "transcription" / "main.py"
+TRANSCRIPTION_SCRIPT = SCRIPTS_DIR / "loop.py"
 EXTRACTION_DIR = SCRIPTS_DIR / "extraction"
 _TRANSCRIPTION_PROCESSES = {}
 _TRANSCRIPTION_LOGS = {}
@@ -37,8 +37,15 @@ def _launch_transcription(project_id, control_file):
     try:
         log_file = log_path.open("w", encoding="utf-8")
         process = subprocess.Popen(
-            [sys.executable, str(TRANSCRIPTION_SCRIPT), "--control-file", str(control_file)],
-            cwd=TRANSCRIPTION_SCRIPT.parent,
+            [
++                sys.executable,
++                str(TRANSCRIPTION_SCRIPT),
++                "--project-dir",
++                str(projects.project_dir(project_id)),
++                "--control-file",
++                str(control_file),
++            ],
++            cwd=SCRIPTS_DIR,
             stdout=log_file,
             stderr=subprocess.STDOUT,
         )
