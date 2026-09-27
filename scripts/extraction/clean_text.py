@@ -277,7 +277,7 @@ Retourne uniquement le JSON demandé.
 """.strip()
 
 
-OUTPUT_SCHEMA = {
+OUTPUT_SCHEMA_DIARIZED = {
     "type": "object",
     "properties": {
         "blocks": {
@@ -300,12 +300,23 @@ OUTPUT_SCHEMA = {
     "additionalProperties": False,
 }
 
+OUTPUT_SCHEMA_RAW = {
+    "type": "object",
+    "properties": {
+        "items": {
+            "type": "array",
+            "items": {"type": "string"}
+        }
+    },
+    "required": ["items"],
+    "additionalProperties": False,
+}
 
 # ---------------------------------------------------------------------------
 # OpenAI
 # ---------------------------------------------------------------------------
 
-def clean_with_openai(text: str, previous_context: str, model: str, system_prompt: str) -> List[dict]:
+def clean_with_openai(text: str, previous_context: str, model: str, system_prompt: st, output_schema: dict,diarized: bool) -> List[dict]:
     api_key = os.getenv("OPENAI_API_KEY")
 
     if not api_key:
@@ -355,7 +366,7 @@ def clean_with_openai(text: str, previous_context: str, model: str, system_promp
             "type": "json_schema",
             "name": "meeting_thought_units",
             "strict": True,
-            "schema": OUTPUT_SCHEMA,
+            "schema": output_schema,
         }
     },
 )
@@ -367,7 +378,10 @@ def clean_with_openai(text: str, previous_context: str, model: str, system_promp
             "OpenAI returned invalid JSON:\n" + response.output_text
         ) from exc
 
-    return validate_blocks(data)
+    if diarized:
+        return validate_blocks(data)
+    else:
+        return validate_raw(data)
     
 
 # ---------------------------------------------------------------------------
@@ -470,6 +484,28 @@ def validate_blocks(data: dict) -> List[dict]:
 
     return blocks
 
+def validate_raw(data: dict) -> List[dict]:
+    if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+        raise RuntimeError(f"Invalid model response: {data}")
+
+    clean_items = []
+
+    for item in data["items"]:
+        if isinstance(item, str):
+            item = re.sub(r"\s+", " ", item).strip()
+            if item:
+                clean_items.append(item)
+
+    if not clean_items:
+        raise RuntimeError("The model returned no usable items.")
+
+    # Normalize raw output to the same internal structure
+    return [
+        {
+            "speaker": "",
+            "items": clean_items,
+        }
+    ]
 
 def format_output(blocks: List[dict]) -> str:
     output_blocks = []
@@ -566,6 +602,7 @@ def main() -> int:
             return 1
 
         system_prompt = SYSTEM_PROMPT_DIARIZED
+        output_schema = OUTPUT_SCHEMA_DIARIZED
 
     else:
         # Raw transcript: oldest file is context, second-oldest is the segment.
@@ -588,12 +625,18 @@ def main() -> int:
             print(f"Erreur de lecture: {exc}", file=sys.stderr)
             return 1
 
-    system_prompt = SYSTEM_PROMPT_RAW
+        system_prompt = SYSTEM_PROMPT_RAW
+        output_schema = OUTPUT_SCHEMA_RAW
 
     word_count = len(segment.split())
     print(f"Bloc extrait: ~{word_count} mots")
     print(f"AI: {args.ai}")
 
+    if not segment.strip():
+        print("Bloc vide — aucun texte à nettoyer.")
+        files[0].unlink()
+        print(f"Fichier supprimé : {files[0].name}")
+        return 0
     # ---------------------------------------------------------------------------
     # According to AI mode, call the appropriate model and clean the text
     # ---------------------------------------------------------------------------
@@ -607,7 +650,7 @@ def main() -> int:
                 segment,
                 previous_context,
                 model,
-                system_prompt,
+                system_prompt,output_schema, args.diarized
             )
 
         else:
@@ -637,9 +680,15 @@ def main() -> int:
             f.write(result.rstrip())
             f.write("\n")
 
+        # Delete the oldest transcript only after successful cleaning
+        files[0].unlink()
+        print(f"Fichier supprimé : {files[0].name}")
+
     except OSError as exc:
         print(f"Erreur d'écriture: {exc}", file=sys.stderr)
         return 1
+
+    
 
     print(f"\nFichier mis à jour: {CLEAN_TEXT_OUTPUT}")
     return 0

@@ -5,8 +5,12 @@ from pathlib import Path
 from transcription.sound import record_audio
 from transcription.transcriptGradium import transcribe_audio
 
-from datetime import datetime
+import subprocess
+import sys
 
+from datetime import datetime
+def timestamp():
+    return datetime.now().strftime("%H:%M:%S")
 
 def log(message: str) -> None:
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {message}", flush=True)
@@ -16,8 +20,13 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 AUDIO_FOLDER = REPO_ROOT / "files" / "audio"
 TRANSCRIPT_FOLDER = REPO_ROOT / "files" / "raw_text_chunks"
 
-CHUNK_DURATION = 60
+CLEAN_TEXT_SCRIPT = (
+    Path(__file__).resolve().parent
+    / "extraction"
+    / "clean_text.py"
+)
 
+CHUNK_DURATION = 15
 POLL_INTERVAL = 1
 
 def get_next_audio_number() -> int:
@@ -61,6 +70,23 @@ def recording_loop() -> None:
 
         number += 1
 
+def clean_transcript():
+    print("[CLEAN] Starting cleaning...")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(CLEAN_TEXT_SCRIPT),
+            "--ai", "api",
+            # "--diarized",   # uncomment for diarized transcripts
+        ],
+        check=False,
+    )
+
+    if result.returncode == 0:
+        print("[CLEAN] Cleaning complete.")
+    else:
+        print(f"[CLEAN] Cleaning failed (exit code {result.returncode}).")
 
 def transcription_loop() -> None:
     """
@@ -117,6 +143,36 @@ def transcription_loop() -> None:
             # Keep the audio file so it can be retried
             time.sleep(POLL_INTERVAL)
 
+
+def processing_loop():
+    while True:
+        audio_files = sorted(
+            AUDIO_FOLDER.glob("audio*.wav"),
+            key=lambda p: p.stat().st_ctime,
+        )
+
+        if not audio_files:
+            time.sleep(1)
+            continue
+
+        audio_path = audio_files[0]
+        number = audio_path.stem.removeprefix("audio")
+        transcript_path = TRANSCRIPT_FOLDER / f"transcript{number}.txt"
+
+        try:
+            print(f"[{timestamp()}] Transcribing: {audio_path}")
+
+            transcribe_audio(audio_path, transcript_path)
+
+            audio_path.unlink()
+            print(f"[{timestamp()}] Deleted: {audio_path}")
+
+            clean_transcript()
+
+        except Exception as e:
+            print(f"[PROCESS] Error: {e}")
+            time.sleep(1)
+
 def main() -> None:
     recorder = threading.Thread(
         target=recording_loop,
@@ -124,7 +180,7 @@ def main() -> None:
     )
 
     transcriber = threading.Thread(
-        target=transcription_loop,
+        target=processing_loop,
         daemon=True,
     )
 
