@@ -1,0 +1,12 @@
+{
+  "storage_mode": "local",
+  "github_repo_path": "",
+  "execution_mode": "api",
+  "local_model_backend": "ollama",
+  "api_model": "openai/whisper-large-v3",
+  "clean_ai": "api",
+  "clean_diarized": false,
+  "clean_output": "",
+  "clean_model": "",
+  "transcription_enabled": false
+}

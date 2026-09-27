@@ -19,7 +19,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 APP_ROOT = Path(__file__).resolve().parents[2]
-LOCAL_PROJECTS_ROOT = APP_ROOT / "files" / "projects"
+LOCAL_PROJECTS_ROOT = APP_ROOT / "projects"
 
 
 def projects_root():
@@ -53,15 +53,58 @@ def project_dir(project_id):
     d.mkdir(parents=True, exist_ok=True)
     return d
 
-
 def create_project(name):
-    """Crée un nouveau projet et retourne son id (slug)."""
+    """Create a project and return its id (slug)."""
     project_id = slugify(name)
-    d = project_dir(project_id)
-    # squelettes vides pour que le reste du code n'ait jamais à tester l'existence
-    current_tasks_path(project_id).write_text("{}", encoding="utf-8")
-    archived_tasks_path(project_id).write_text("[]", encoding="utf-8")
-    save_session_state(project_id, {"status": "stopped", "updated_at": _now()})
+    d = projects_root() / project_id
+
+    # Do not reset an existing project's data if its name is reused.
+    if d.exists():
+        raise FileExistsError(f"Le projet existe déjà : {project_id}")
+
+    d.mkdir(parents=True)
+
+    leaf_dirs = [
+        "files/audio",
+        "files/backup",
+        "files/extracted_data",
+        "files/raw_text_chunks",
+        "files/reference",
+        "files/tests",
+        "archive/calendar",
+        "archive/meeting_reports",
+        "archive/tasks_and_events",
+    ]
+    for relative_dir in leaf_dirs:
+        folder = d / relative_dir
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / ".gitkeep").touch()
+
+    (d / "current_tasks.json").write_text("{}", encoding="utf-8")
+    (d / "archived_tasks.json").write_text("[]", encoding="utf-8")
+    (d / "archive/tasks_and_events/completed_tasks_and_past_events.json").write_text(
+        "{}", encoding="utf-8"
+    )
+    (d / "archive/tasks_and_events/open_tasks_and_upcoming_events.json").write_text(
+        "{}", encoding="utf-8"
+    )
+    (d / "archive/calendar/latest.ical").write_text(
+        "BEGIN:VCALENDAR\r\n"
+        "VERSION:2.0\r\n"
+        "PRODID:-//RiseOfAgentsX//MeetingAgent//FR\r\n"
+        "END:VCALENDAR\r\n",
+        encoding="utf-8",
+    )
+
+    save_session_state(
+        project_id,
+        {"status": "stopped", "updated_at": _now()},
+    )
+    (d / "transcription_control.json").write_text(
+        '{"going": false}\n',
+        encoding="utf-8",
+    )
+
     return project_id
 
 
