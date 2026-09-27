@@ -5,6 +5,11 @@ from pathlib import Path
 from transcription.sound import record_audio
 from transcription.transcriptGradium import transcribe_audio
 
+from datetime import datetime
+
+
+def log(message: str) -> None:
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] {message}", flush=True)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,14 +32,14 @@ def recording_loop() -> None:
     while True:
         audio_path = AUDIO_FOLDER / f"audio{number}.wav"
 
-        print(f"\nRecording {audio_path.name}...")
+        log(f"Recording {audio_path.name}...")
 
         record_audio(
             audio_path,
             duration=CHUNK_DURATION,
         )
 
-        print(f"Saved: {audio_path}")
+        log(f"Recording {audio_path.name}...")
 
         number += 1
 
@@ -72,9 +77,7 @@ def transcription_loop() -> None:
             / f"{audio_path.stem.replace('audio', 'transcript')}.txt"
         )
 
-        print(
-            f"\nTranscribing: {audio_path.name}"
-        )
+        log(f"Transcribing: {audio_path.name}")
 
         try:
             transcribe_audio(
@@ -85,12 +88,8 @@ def transcription_loop() -> None:
             # Only delete after successful transcription
             audio_path.unlink()
 
-            print(
-                f"Transcription complete: {transcript_path}"
-            )
-            print(
-                f"Deleted: {audio_path}"
-            )
+            log(f"Transcription complete: {transcript_path.name}")
+            log(f"Deleted: {audio_path.name}")
 
         except Exception as exc:
             print(
