@@ -25,7 +25,7 @@ def transcribe_audio(audio_path, filename):
             },
             data=audio_file,
             stream=True,
-            timeout=60000,
+            timeout=300,
         )
     response.raise_for_status()
 

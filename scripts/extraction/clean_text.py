@@ -59,11 +59,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
-REPO_ROOT = next(
-    (parent for parent in Path(__file__).resolve().parents
-     if (parent / "files").is_dir() and ((parent / "app.py").is_file() or (parent / "scripts").is_dir())),
-    Path(__file__).resolve().parents[1],
-)
+REPO_ROOT = Path(__file__).resolve().parents[2]
 INPUT_FOLDER = REPO_ROOT / "files" / "raw_text_chunks"
 CLEAN_TEXT_OUTPUT = REPO_ROOT / "files" / "extracted_data" / "whole_clean_text.txt"
 RAW_TEXT_OUTPUT = REPO_ROOT / "files" / "backup" /"whole_raw_text.txt"
@@ -136,7 +132,7 @@ def get_last_speaker_turns(text: str, n: int = 2) -> str:
     return "\n\n".join(blocks[-n:])
 
 
-def extract_segment(paths: List[Path]) -> tuple[str, str]:
+def extract_segment(paths: List[Path]) -> Tuple[str, str]:
     """
     Return:
         previous_context, current_chunk
@@ -281,7 +277,7 @@ Retourne uniquement le JSON demandé.
 """.strip()
 
 
-OUTPUT_SCHEMA = {
+OUTPUT_SCHEMA_DIARIZED = {
     "type": "object",
     "properties": {
         "blocks": {
@@ -304,12 +300,23 @@ OUTPUT_SCHEMA = {
     "additionalProperties": False,
 }
 
+OUTPUT_SCHEMA_RAW = {
+    "type": "object",
+    "properties": {
+        "items": {
+            "type": "array",
+            "items": {"type": "string"}
+        }
+    },
+    "required": ["items"],
+    "additionalProperties": False,
+}
 
 # ---------------------------------------------------------------------------
 # OpenAI
 # ---------------------------------------------------------------------------
 
-def clean_with_openai(text: str, previous_context: str, model: str, system_prompt: str) -> List[dict]:
+def clean_with_openai(text: str, previous_context: str, model: str, system_prompt: st, output_schema: dict,diarized: bool) -> List[dict]:
     api_key = os.getenv("OPENAI_API_KEY")
 
     if not api_key:
@@ -359,7 +366,7 @@ def clean_with_openai(text: str, previous_context: str, model: str, system_promp
             "type": "json_schema",
             "name": "meeting_thought_units",
             "strict": True,
-            "schema": OUTPUT_SCHEMA,
+            "schema": output_schema,
         }
     },
 )
@@ -371,7 +378,10 @@ def clean_with_openai(text: str, previous_context: str, model: str, system_promp
             "OpenAI returned invalid JSON:\n" + response.output_text
         ) from exc
 
-    return validate_blocks(data)
+    if diarized:
+        return validate_blocks(data)
+    else:
+        return validate_raw(data)
     
 
 # ---------------------------------------------------------------------------
@@ -386,7 +396,7 @@ def clean_with_ollama(text: str, model: str, system_prompt: str) -> List[dict]:
         "messages": [
             {
                 "role": "system",
-                "content": SYSTEM_PROMPT_DIARIZED
+                "content": SYSTEM_PROMPT
                 + "\n\nRetourne exactement un objet JSON avec cette forme:"
                 + '\n{"blocks":[{"speaker":"...","items":["...","..."]}]}',
             },
@@ -474,6 +484,28 @@ def validate_blocks(data: dict) -> List[dict]:
 
     return blocks
 
+def validate_raw(data: dict) -> List[dict]:
+    if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+        raise RuntimeError(f"Invalid model response: {data}")
+
+    clean_items = []
+
+    for item in data["items"]:
+        if isinstance(item, str):
+            item = re.sub(r"\s+", " ", item).strip()
+            if item:
+                clean_items.append(item)
+
+    if not clean_items:
+        raise RuntimeError("The model returned no usable items.")
+
+    # Normalize raw output to the same internal structure
+    return [
+        {
+            "speaker": "",
+            "items": clean_items,
+        }
+    ]
 
 def format_output(blocks: List[dict]) -> str:
     output_blocks = []
@@ -527,7 +559,6 @@ def main() -> int:
     )
 
     args = parser.parse_args()
-    output_path = args.output
 
     # ---------------------------------------------------------------------------
     # Select input files
@@ -543,7 +574,7 @@ def main() -> int:
 
     if not files:
         print(
-            f"Aucun fichier .txt trouvé dans {INPUT_FOLDER}",
+            f"Aucun fichier .txt trouvé dans {input_folder}",
             file=sys.stderr,
         )
         return 1
@@ -571,6 +602,7 @@ def main() -> int:
             return 1
 
         system_prompt = SYSTEM_PROMPT_DIARIZED
+        output_schema = OUTPUT_SCHEMA_DIARIZED
 
     else:
         # Raw transcript: oldest file is context, second-oldest is the segment.
@@ -593,12 +625,18 @@ def main() -> int:
             print(f"Erreur de lecture: {exc}", file=sys.stderr)
             return 1
 
-    system_prompt = SYSTEM_PROMPT_RAW
+        system_prompt = SYSTEM_PROMPT_RAW
+        output_schema = OUTPUT_SCHEMA_RAW
 
     word_count = len(segment.split())
     print(f"Bloc extrait: ~{word_count} mots")
     print(f"AI: {args.ai}")
 
+    if not segment.strip():
+        print("Bloc vide — aucun texte à nettoyer.")
+        files[0].unlink()
+        print(f"Fichier supprimé : {files[0].name}")
+        return 0
     # ---------------------------------------------------------------------------
     # According to AI mode, call the appropriate model and clean the text
     # ---------------------------------------------------------------------------
@@ -612,7 +650,7 @@ def main() -> int:
                 segment,
                 previous_context,
                 model,
-                system_prompt,
+                system_prompt,output_schema, args.diarized
             )
 
         else:
@@ -634,19 +672,25 @@ def main() -> int:
     result = format_output(blocks)
 
     try:
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        CLEAN_TEXT_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 
-        with output_path.open("a", encoding="utf-8") as f:
-            if output_path.stat().st_size > 0:
+        with CLEAN_TEXT_OUTPUT.open("a", encoding="utf-8") as f:
+            if CLEAN_TEXT_OUTPUT.stat().st_size > 0:
                 f.write("\n\n")
             f.write(result.rstrip())
             f.write("\n")
+
+        # Delete the oldest transcript only after successful cleaning
+        files[0].unlink()
+        print(f"Fichier supprimé : {files[0].name}")
 
     except OSError as exc:
         print(f"Erreur d'écriture: {exc}", file=sys.stderr)
         return 1
 
-    print(f"\nFichier mis à jour: {output_path}")
+    
+
+    print(f"\nFichier mis à jour: {CLEAN_TEXT_OUTPUT}")
     return 0
 
 
