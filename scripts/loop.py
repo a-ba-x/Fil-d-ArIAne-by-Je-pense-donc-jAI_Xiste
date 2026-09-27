@@ -17,7 +17,25 @@ AUDIO_FOLDER = REPO_ROOT / "files" / "audio"
 TRANSCRIPT_FOLDER = REPO_ROOT / "files" / "raw_text_chunks"
 
 CHUNK_DURATION = 60
+
 POLL_INTERVAL = 1
+
+def get_next_audio_number() -> int:
+    numbers = []
+
+    for path in AUDIO_FOLDER.glob("audio*.wav"):
+        try:
+            numbers.append(int(path.stem.removeprefix("audio")))
+        except ValueError:
+            pass
+
+    for path in TRANSCRIPT_FOLDER.glob("transcript*.txt"):
+        try:
+            numbers.append(int(path.stem.removeprefix("transcript")))
+        except ValueError:
+            pass
+
+    return max(numbers, default=-1) + 1
 
 def recording_loop() -> None:
     """
@@ -27,19 +45,19 @@ def recording_loop() -> None:
 
     AUDIO_FOLDER.mkdir(parents=True, exist_ok=True)
 
-    number = 0
+    number = get_next_audio_number()
 
     while True:
         audio_path = AUDIO_FOLDER / f"audio{number}.wav"
 
-        log(f"Recording {audio_path.name}...")
+        log(f"Recording {audio_path.resolve()}...")
 
         record_audio(
             audio_path,
             duration=CHUNK_DURATION,
         )
 
-        log(f"Recording {audio_path.name}...")
+        #log(f"Recording done: {audio_path.resolve()}")
 
         number += 1
 
@@ -77,7 +95,7 @@ def transcription_loop() -> None:
             / f"{audio_path.stem.replace('audio', 'transcript')}.txt"
         )
 
-        log(f"Transcribing: {audio_path.name}")
+        log(f"Transcribing: {audio_path.resolve()}")
 
         try:
             transcribe_audio(
@@ -89,7 +107,7 @@ def transcription_loop() -> None:
             audio_path.unlink()
 
             log(f"Transcription complete: {transcript_path.name}")
-            log(f"Deleted: {audio_path.name}")
+            log(f"Deleted: {audio_path.resolve()}")
 
         except Exception as exc:
             print(

@@ -1,1 +1,0 @@
-L'intégration est effectuée par le programme de la machine de Turing. La salle de la configuration C, à sa configuration successeur C', correspond à des opérations qui se codent trivialement par des push, 
