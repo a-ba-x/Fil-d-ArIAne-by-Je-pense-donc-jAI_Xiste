@@ -18,7 +18,20 @@ import re
 from pathlib import Path
 from datetime import datetime, timezone
 
-PROJECTS_ROOT = Path(__file__).resolve().parent.parent / "data" / "projects"
+APP_ROOT = Path(__file__).resolve().parents[2]
+LOCAL_PROJECTS_ROOT = APP_ROOT / "files" / "projects"
+
+
+def projects_root():
+    """Resolve the project directory from the UI storage configuration."""
+    from ui import storage
+
+    config = storage.load_config()
+    if config.get("storage_mode") == "github":
+        repo_path = config.get("github_repo_path", "").strip()
+        if repo_path:
+            return Path(repo_path).expanduser() / "data" / "projects"
+    return LOCAL_PROJECTS_ROOT
 
 _SLUG_RE = re.compile(r"[^a-zA-Z0-9_-]+")
 
@@ -29,13 +42,14 @@ def slugify(name):
 
 def list_projects():
     """Liste les ids de projets existants (= noms de sous-dossiers)."""
-    if not PROJECTS_ROOT.exists():
+    root = projects_root()
+    if not root.exists():
         return []
-    return sorted(p.name for p in PROJECTS_ROOT.iterdir() if p.is_dir())
+    return sorted(p.name for p in root.iterdir() if p.is_dir())
 
 
 def project_dir(project_id):
-    d = PROJECTS_ROOT / project_id
+    d = projects_root() / project_id
     d.mkdir(parents=True, exist_ok=True)
     return d
 

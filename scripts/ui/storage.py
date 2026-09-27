@@ -10,7 +10,8 @@ import subprocess
 from pathlib import Path
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "data" / "app_config.json"
-ENV_PATH = CONFIG_PATH.parent.parent / ".env"
+APP_ROOT = Path(__file__).resolve().parents[2]
+ENV_PATH = APP_ROOT / ".env"
 
 DEFAULT_CONFIG = {
     "storage_mode": "local",          # "local" | "github"

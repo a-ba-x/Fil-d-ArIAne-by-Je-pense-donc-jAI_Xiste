@@ -8,9 +8,10 @@ from pathlib import Path
 
 from ui import projects
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-TRANSCRIPTION_SCRIPT = REPO_ROOT / "transcription" / "main.py"
-EXTRACTION_DIR = REPO_ROOT / "extraction"
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+APP_ROOT = SCRIPTS_DIR.parent
+TRANSCRIPTION_SCRIPT = SCRIPTS_DIR / "transcription" / "main.py"
+EXTRACTION_DIR = SCRIPTS_DIR / "extraction"
 _TRANSCRIPTION_PROCESSES = {}
 _TRANSCRIPTION_LOGS = {}
 
@@ -31,7 +32,7 @@ def _launch_transcription(project_id, control_file):
     if not TRANSCRIPTION_SCRIPT.exists():
         return None, f"Script de transcription introuvable : {TRANSCRIPTION_SCRIPT}"
 
-    log_path = REPO_ROOT / "data" / "logs" / f"transcription_{project_id}.log"
+    log_path = APP_ROOT / "data" / "logs" / f"transcription_{project_id}.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         log_file = log_path.open("w", encoding="utf-8")
@@ -131,7 +132,7 @@ def _watch_in_background(project_id, process):
 def _run_command(args):
     return subprocess.run(
         args,
-        cwd=REPO_ROOT,
+        cwd=APP_ROOT,
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -171,7 +172,7 @@ def generate_resume(project_id, config=None):
         detail = summary_result.stderr.strip() or summary_result.stdout.strip()
         return False, f"Échec de summary.py (code {summary_result.returncode}).\n{detail}"
 
-    generated_report = REPO_ROOT / "files" / "extracted_data" / "meeting_report.html"
+    generated_report = APP_ROOT / "files" / "extracted_data" / "meeting_report.html"
     if not generated_report.exists():
         return False, f"Commande terminée, mais rapport introuvable : {generated_report}"
 
