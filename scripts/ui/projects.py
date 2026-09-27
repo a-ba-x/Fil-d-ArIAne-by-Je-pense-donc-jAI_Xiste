@@ -15,6 +15,7 @@ data/projects/<project_id>/
 
 import json
 import re
+import uuid
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -100,6 +101,15 @@ def create_project(name):
         project_id,
         {"status": "stopped", "updated_at": _now()},
     )
+    save_meeting_state(
+        project_id,
+        {
+            "meeting_id": None,
+            "started_at": None,
+            "finalized": True,
+            "finalized_at": None,
+        },
+    )
     (d / "transcription_control.json").write_text(
         '{"going": false}\n',
         encoding="utf-8",
@@ -128,6 +138,11 @@ def session_state_path(project_id):
     return project_dir(project_id) / "session_state.json"
 
 
+def meeting_state_path(project_id):
+    """Path to the state record for the project's current meeting."""
+    return project_dir(project_id) / "current_meeting.json"
+
+
 def _now():
     return datetime.now(timezone.utc).isoformat()
 
@@ -149,4 +164,44 @@ def set_session_status(project_id, status):
     """status attendu : 'running' | 'paused' | 'stopped'."""
     state = {"status": status, "updated_at": _now()}
     save_session_state(project_id, state)
+    return state
+
+
+def load_meeting_state(project_id):
+    """Load current-meeting state; return None for projects without a record."""
+    path = meeting_state_path(project_id)
+    if not path.exists():
+        return None
+    with path.open(encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_meeting_state(project_id, state):
+    """Persist current-meeting state without changing meeting files."""
+    with meeting_state_path(project_id).open("w", encoding="utf-8") as f:
+        json.dump(state, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+
+
+def start_meeting(project_id):
+    """Create and persist a fresh meeting record, returning its state."""
+    state = {
+        "meeting_id": uuid.uuid4().hex,
+        "started_at": _now(),
+        "finalized": False,
+        "finalized_at": None,
+    }
+    save_meeting_state(project_id, state)
+    return state
+
+
+def mark_meeting_finalized(project_id):
+    """Mark the current meeting finalized; return None if no meeting exists."""
+    state = load_meeting_state(project_id)
+    if state is None or state.get("meeting_id") is None:
+        return None
+    if not state.get("finalized"):
+        state["finalized"] = True
+        state["finalized_at"] = _now()
+        save_meeting_state(project_id, state)
     return state

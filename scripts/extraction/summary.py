@@ -15,11 +15,8 @@ from dotenv import load_dotenv
 
 
 load_dotenv()
-REPO_ROOT = Path(__file__).resolve().parents[2]
-INPUT_FOLDER = REPO_ROOT / "files" / "raw_text_chunks"
-CLEAN_TEXT_OUTPUT = REPO_ROOT / "files" / "extracted_data" / "whole_clean_text.txt"
-RAW_TEXT_OUTPUT = REPO_ROOT / "files" / "backup" /"whole_raw_text.txt"
-HTML_TEMPLATE_FILE =  REPO_ROOT / "files" / "reference" / "meeting_report_reference.html"
+SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
+HTML_TEMPLATE_FILE = SCRIPTS_ROOT / "templates" / "meeting_report_reference.html"
 
 DEFAULT_SUMMARY_MODEL = "gpt-6-sol"
 DEFAULT_LOCAL_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5-coder:1.5b")
@@ -232,18 +229,24 @@ def main() -> int:
         help="Override the default model for the selected AI backend.",
     )
 
+    parser.add_argument(
+        "--project-dir",
+        type=Path,
+        required=True,
+        help="Project directory containing the current meeting files.",
+    )
+
     args = parser.parse_args()
+
+    project_dir = args.project_dir.expanduser().resolve()
+    extracted_data_dir = project_dir / "files" / "extracted_data"
+    input_file = extracted_data_dir / "whole_clean_text.txt"
+    output_html = extracted_data_dir / "meeting_report.html"
+    json_output = extracted_data_dir / "meeting_data.json"
 
     # -----------------------------------------------------------
     # Input
     # -----------------------------------------------------------
-
-    input_file = (
-        REPO_ROOT
-        / "files"
-        / "extracted_data"
-        / "whole_clean_text.txt"
-    )
 
     if not input_file.exists():
         print(
@@ -270,7 +273,14 @@ def main() -> int:
     else:
         summary_prompt = SUMMARY_PROMPT_RAW
     
-    html_template = HTML_TEMPLATE_FILE.read_text(encoding="utf-8")
+    try:
+        html_template = HTML_TEMPLATE_FILE.read_text(encoding="utf-8")
+    except OSError as exc:
+        print(
+            f"Impossible de lire le modèle HTML {HTML_TEMPLATE_FILE}: {exc}",
+            file=sys.stderr,
+        )
+        return 1
 
     # -----------------------------------------------------------
     # Choose model
@@ -285,7 +295,23 @@ def main() -> int:
             model=model, prompt=summary_prompt , html_template = html_template
         )
 
-        report = json.loads(result)
+        try:
+            report = json.loads(result)
+        except json.JSONDecodeError as exc:
+            print(f"La réponse du modèle n'est pas un JSON valide: {exc}", file=sys.stderr)
+            return 1
+
+        if (
+            not isinstance(report, dict)
+            or not isinstance(report.get("html"), str)
+            or not isinstance(report.get("taches_evenements"), dict)
+        ):
+            print(
+                "La réponse JSON doit contenir les champs html (texte) "
+                "et taches_evenements (objet).",
+                file=sys.stderr,
+            )
+            return 1
 
     else:
         model = args.model or DEFAULT_LOCAL_MODEL
@@ -301,27 +327,12 @@ def main() -> int:
     # Write report
     # -----------------------------------------------------------
 
-    output_html = (
-        REPO_ROOT
-        / "files"
-        / "extracted_data"
-        / "meeting_report.html"
-    )
-
-    json_output = (
-        REPO_ROOT
-        / "files"
-        / "extracted_data"
-        / "meeting_data.json"
-    )
-
     try:
-        output_html.parent.mkdir(parents=True, exist_ok=True)
+        extracted_data_dir.mkdir(parents=True, exist_ok=True)
         output_html.write_text(report["html"], encoding="utf-8")
-        json_output.parent.mkdir(parents=True, exist_ok=True)
         json_output.write_text(
-        json.dumps(report["taches_evenements"], ensure_ascii=False, indent=2),
-        encoding="utf-8",
+            json.dumps(report["taches_evenements"], ensure_ascii=False, indent=2),
+            encoding="utf-8",
         )
     except OSError as exc:
         print(f"Erreur d'écriture: {exc}", file=sys.stderr)

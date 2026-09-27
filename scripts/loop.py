@@ -154,6 +154,11 @@ def main() -> None:
     audio_folder = files_dir / "audio"
     transcript_folder = files_dir / "raw_text_chunks"
 
+    transcript_folder.mkdir(parents=True, exist_ok=True)
+
+    if not any(transcript_folder.glob("transcript*.txt")):
+        (transcript_folder / "transcript_context.txt").touch()
+
     recorder = threading.Thread(
         target=recording_loop,
         args=(audio_folder, transcript_folder, control_file),

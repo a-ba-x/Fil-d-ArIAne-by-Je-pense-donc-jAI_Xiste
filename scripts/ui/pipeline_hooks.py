@@ -38,14 +38,14 @@ def _launch_transcription(project_id, control_file):
         log_file = log_path.open("w", encoding="utf-8")
         process = subprocess.Popen(
             [
-+                sys.executable,
-+                str(TRANSCRIPTION_SCRIPT),
-+                "--project-dir",
-+                str(projects.project_dir(project_id)),
-+                "--control-file",
-+                str(control_file),
-+            ],
-+            cwd=SCRIPTS_DIR,
+                sys.executable,
+                str(TRANSCRIPTION_SCRIPT),
+                "--project-dir",
+                str(projects.project_dir(project_id)),
+                "--control-file",
+                str(control_file),
+            ],
+            cwd=SCRIPTS_DIR,
             stdout=log_file,
             stderr=subprocess.STDOUT,
         )
