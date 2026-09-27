@@ -75,6 +75,8 @@ def create_project(name):
         "archive/calendar",
         "archive/meeting_reports",
         "archive/tasks_and_events",
+        "archive/transcripts/raw",
+        "archive/transcripts/cleaned",
     ]
     for relative_dir in leaf_dirs:
         folder = d / relative_dir
@@ -143,6 +145,26 @@ def meeting_state_path(project_id):
     return project_dir(project_id) / "current_meeting.json"
 
 
+def open_tasks_and_upcoming_events_path(project_id):
+    return project_dir(project_id) / "archive" / "tasks_and_events" / "open_tasks_and_upcoming_events.json"
+
+
+def completed_tasks_and_past_events_path(project_id):
+    return project_dir(project_id) / "archive" / "tasks_and_events" / "completed_tasks_and_past_events.json"
+
+
+def meeting_reports_dir(project_id):
+    return project_dir(project_id) / "archive" / "meeting_reports"
+
+
+def archived_raw_transcripts_dir(project_id):
+    return project_dir(project_id) / "archive" / "transcripts" / "raw"
+
+
+def archived_cleaned_transcripts_dir(project_id):
+    return project_dir(project_id) / "archive" / "transcripts" / "cleaned"
+
+
 def _now():
     return datetime.now(timezone.utc).isoformat()
 
@@ -185,14 +207,32 @@ def save_meeting_state(project_id, state):
 
 def start_meeting(project_id):
     """Create and persist a fresh meeting record, returning its state."""
+    started_at = _now()
+    meeting_id = uuid.uuid4().hex
+    archive_stamp = datetime.fromisoformat(started_at).strftime("%Y%m%dT%H%M%SZ")
     state = {
-        "meeting_id": uuid.uuid4().hex,
-        "started_at": _now(),
+        "meeting_id": meeting_id,
+        "meeting_key": f"{archive_stamp}_{meeting_id}",
+        "started_at": started_at,
         "finalized": False,
         "finalized_at": None,
     }
     save_meeting_state(project_id, state)
     return state
+
+
+def meeting_archive_key(state):
+    """Return the stable, date-sortable archive key for a meeting state."""
+    if state.get("meeting_key"):
+        return state["meeting_key"]
+    meeting_id = state.get("meeting_id")
+    started_at = state.get("started_at")
+    if not meeting_id:
+        raise ValueError("Meeting state has no meeting_id")
+    if started_at:
+        stamp = datetime.fromisoformat(started_at).strftime("%Y%m%dT%H%M%SZ")
+        return f"{stamp}_{meeting_id}"
+    return meeting_id
 
 
 def mark_meeting_finalized(project_id):

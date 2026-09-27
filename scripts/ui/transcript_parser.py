@@ -39,5 +39,10 @@ def extract_segments(html):
     matches = SPEAKER_BLOCK_RE.findall(html)
     if not matches:
         text = strip_tags(html)
-        return [{"speaker": None, "text": text}] if text else []
+        paragraphs = [
+            paragraph.strip()
+            for paragraph in re.split(r"\n\s*\n+", text)
+            if paragraph.strip()
+        ]
+        return [{"speaker": None, "text": paragraph} for paragraph in paragraphs]
     return [{"speaker": speaker, "text": strip_tags(content)} for speaker, content in matches]

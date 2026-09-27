@@ -32,7 +32,8 @@ def build_ics(nodes, calendar_name="Planning"):
             continue
         titre = tasks.get_title(node)
         qui = node.get("argv", {}).get("qui") or "Non assigné"
-        uid = f"{name}-{uuid.uuid4()}@riseofagentsx"
+        stable_uid = uuid.uuid5(uuid.NAMESPACE_URL, f"riseofagentsx:{name}")
+        uid = f"{stable_uid}@riseofagentsx"
         lines += [
             "BEGIN:VEVENT",
             f"UID:{uid}",

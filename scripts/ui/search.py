@@ -10,15 +10,79 @@ from ui import projects, tasks
 from ui.transcript_parser import extract_segments
 import os
 from pathlib import Path
+from datetime import datetime
+
+
+CURRENT_MEETING_KEY = "__current__"
+_CLEAN_TRANSCRIPT_SUFFIX = "_whole_clean_text.txt"
+
+
+def meeting_label(meeting_key):
+    stamp = meeting_key.split("_", 1)[0]
+    try:
+        started = datetime.strptime(stamp, "%Y%m%dT%H%M%SZ")
+        return started.strftime("%Y-%m-%d %H:%M UTC")
+    except ValueError:
+        return meeting_key
+
+
+def list_transcript_meetings(project_id):
+    """Return the current meeting and archived meetings with cleaned text."""
+    entries = []
+    state = projects.load_meeting_state(project_id)
+    current_path = projects.project_dir(project_id) / "files" / "extracted_data" / "whole_clean_text.txt"
+    if state and state.get("meeting_id") and not state.get("finalized", False):
+        entries.append({
+            "key": CURRENT_MEETING_KEY,
+            "label": f"En cours — {meeting_label(projects.meeting_archive_key(state))}",
+            "path": current_path,
+            "current": True,
+        })
+    elif current_path.is_file():
+        entries.append({
+            "key": CURRENT_MEETING_KEY,
+            "label": "Réunion actuelle",
+            "path": current_path,
+            "current": True,
+        })
+
+    transcript_dir = projects.archived_cleaned_transcripts_dir(project_id)
+    if transcript_dir.exists():
+        archived = []
+        for path in transcript_dir.glob(f"*{_CLEAN_TRANSCRIPT_SUFFIX}"):
+            meeting_key = path.name[:-len(_CLEAN_TRANSCRIPT_SUFFIX)]
+            archived.append({
+                "key": meeting_key,
+                "label": meeting_label(meeting_key),
+                "path": path,
+                "current": False,
+            })
+        entries.extend(sorted(archived, key=lambda item: item["key"], reverse=True))
+    return entries
+
+
+def read_transcript_meeting(project_id, meeting_key):
+    """Read the selected current or archived cleaned transcript."""
+    entries = {item["key"]: item for item in list_transcript_meetings(project_id)}
+    entry = entries.get(meeting_key)
+    if entry is None:
+        raise FileNotFoundError(f"Meeting transcript not found: {meeting_key}")
+    return entry["path"].read_text(encoding="utf-8"), entry
 
 def all_transcript_paths(project_id):
-    dir = projects.project_dir(project_id)
-    if not dir or not os.path.isdir(dir):
+    project_path = projects.project_dir(project_id)
+    if not project_path or not os.path.isdir(project_path):
         return []
     files = []
-    for fn in os.listdir(dir):
+    for fn in os.listdir(project_path):
         if fn.lower().startswith("transcript") and (fn.endswith(".txt") or fn.endswith(".html")):
-            files.append(Path(dir)/fn)
+            files.append(Path(project_path)/fn)
+    current_cleaned = project_path / "files" / "extracted_data" / "whole_clean_text.txt"
+    if current_cleaned.is_file():
+        files.append(current_cleaned)
+    archived_dir = projects.archived_cleaned_transcripts_dir(project_id)
+    if archived_dir.is_dir():
+        files.extend(archived_dir.glob(f"*{_CLEAN_TRANSCRIPT_SUFFIX}"))
     return sorted(files)
 
 

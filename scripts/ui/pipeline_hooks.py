@@ -7,7 +7,7 @@ import sys
 import threading
 from pathlib import Path
 
-from ui import calendar_export, projects, storage
+from ui import calendar_export, projects, storage, tasks
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 APP_ROOT = SCRIPTS_DIR.parent
@@ -178,6 +178,60 @@ def _transcription_log_tail(project_id, max_chars=3000):
         return ""
 
 
+def has_unfinalized_meeting(project_id):
+    state = projects.load_meeting_state(project_id)
+    if state and state.get("meeting_id"):
+        return not state.get("finalized", False)
+    return _meeting_workspace_has_data(project_id)
+
+
+def discard_meeting(project_id):
+    """Discard the unfinished meeting and remove only its partial archive."""
+    state = projects.load_meeting_state(project_id)
+    if state and state.get("finalized", False):
+        return False, "Cette réunion est déjà finalisée et ne peut pas être abandonnée ici."
+
+    _stop_transcription_process(project_id)
+    try:
+        if state and state.get("meeting_id"):
+            meeting_id = state["meeting_id"]
+            meeting_key = projects.meeting_archive_key(state)
+            prefix = f"{meeting_id}::"
+            completed_path = projects.completed_tasks_and_past_events_path(project_id)
+            open_path = projects.open_tasks_and_upcoming_events_path(project_id)
+            completed = _load_archive_json(completed_path)
+            upcoming = _load_archive_json(open_path)
+            completed = {key: node for key, node in completed.items() if not key.startswith(prefix)}
+            upcoming = {key: node for key, node in upcoming.items() if not key.startswith(prefix)}
+            _atomic_write_text(completed_path, json.dumps(completed, ensure_ascii=False, indent=2) + "\n")
+            _atomic_write_text(open_path, json.dumps(upcoming, ensure_ascii=False, indent=2) + "\n")
+            calendar_path = projects.project_dir(project_id) / "archive" / "calendar" / "latest.ical"
+            _atomic_write_text(
+                calendar_path,
+                calendar_export.build_ics(upcoming, calendar_name=project_id) + "\r\n",
+            )
+            partial_archives = (
+                projects.meeting_reports_dir(project_id) / f"{meeting_key}.html",
+                projects.archived_raw_transcripts_dir(project_id) / f"{meeting_key}_whole_raw_text.txt",
+                projects.archived_cleaned_transcripts_dir(project_id) / f"{meeting_key}_whole_clean_text.txt",
+            )
+            for path in partial_archives:
+                if path.is_file():
+                    path.unlink()
+
+        _clear_meeting_workspace(project_id)
+        if state and state.get("meeting_id"):
+            state["finalized"] = True
+            state["finalized_at"] = None
+            state["discarded"] = True
+            state["discarded_at"] = projects._now()
+            projects.save_meeting_state(project_id, state)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return False, f"Abandon incomplet ; les données restantes sont conservées pour réessayer : {exc}"
+
+    return True, "Réunion abandonnée ; ses fichiers temporaires et archives partielles ont été supprimés."
+
+
 def _watch_in_background(project_id, process):
     def watch():
         process.wait()
@@ -246,18 +300,27 @@ def _meeting_item_is_completed_or_past(node, today):
             return bool(event_date) and date.fromisoformat(event_date) < today
         except (TypeError, ValueError):
             return False
-    return bool(node.get("completed")) or node.get("argv", {}).get("statut") == "termine"
+    return bool(node.get("completed")) or node.get("argv", {}).get("statut") in {"termine", "fait"}
 
 
 def _archive_meeting_outputs(project_id, meeting_state, report_path, data_path):
+    # Ensure legacy project-wide tasks are migrated even if the Tasks tab was
+    # never opened during this app session.
+    tasks.load_current(project_id)
+    tasks.load_completed(project_id)
     meeting_id = meeting_state["meeting_id"]
     project_path = projects.project_dir(project_id)
     archive_root = project_path / "archive"
     task_event_dir = archive_root / "tasks_and_events"
     completed_path = task_event_dir / "completed_tasks_and_past_events.json"
     open_path = task_event_dir / "open_tasks_and_upcoming_events.json"
-    report_archive_path = archive_root / "meeting_reports" / f"{meeting_id}.html"
+    meeting_key = projects.meeting_archive_key(meeting_state)
+    report_archive_path = projects.meeting_reports_dir(project_id) / f"{meeting_key}.html"
     calendar_path = archive_root / "calendar" / "latest.ical"
+    raw_source = project_path / "files" / "backup" / "whole_raw_text.txt"
+    cleaned_source = project_path / "files" / "extracted_data" / "whole_clean_text.txt"
+    raw_archive = projects.archived_raw_transcripts_dir(project_id) / f"{meeting_key}_whole_raw_text.txt"
+    cleaned_archive = projects.archived_cleaned_transcripts_dir(project_id) / f"{meeting_key}_whole_clean_text.txt"
 
     report = report_path.read_text(encoding="utf-8")
     if not report.strip():
@@ -292,6 +355,10 @@ def _archive_meeting_outputs(project_id, meeting_state, report_path, data_path):
         destination[meeting_keys[key]] = archived_node
 
     _atomic_write_text(report_archive_path, report)
+    raw_text = raw_source.read_text(encoding="utf-8") if raw_source.is_file() else ""
+    cleaned_text = cleaned_source.read_text(encoding="utf-8")
+    _atomic_write_text(raw_archive, raw_text)
+    _atomic_write_text(cleaned_archive, cleaned_text)
     _atomic_write_text(completed_path, json.dumps(completed, ensure_ascii=False, indent=2) + "\n")
     _atomic_write_text(open_path, json.dumps(upcoming, ensure_ascii=False, indent=2) + "\n")
     _atomic_write_text(
@@ -358,11 +425,11 @@ def generate_resume(project_id, config=None, reuse_existing=False):
                 data = json.load(f)
             report_html = generated_report.read_text(encoding="utf-8")
             if isinstance(data, dict) and report_html.strip():
-                projects.resume_html_path(project_id).write_text(report_html, encoding="utf-8")
                 return True, "Rapport déjà généré ; réutilisation des résultats existants."
         except (OSError, json.JSONDecodeError):
             pass
 
+    cleaned_transcript = extracted_dir / "whole_clean_text.txt"
     clean_args = [
         sys.executable,
         str(clean_script),
@@ -376,10 +443,22 @@ def generate_resume(project_id, config=None, reuse_existing=False):
     if config.get("clean_model"):
         clean_args.extend(["--model", config["clean_model"]])
 
-    clean_result = _run_command(clean_args)
-    if clean_result.returncode:
+    cleaned_ready = cleaned_transcript.is_file() and bool(
+        cleaned_transcript.read_text(encoding="utf-8").strip()
+    )
+    clean_result = None if cleaned_ready else _run_command(clean_args)
+    if clean_result is not None and clean_result.returncode:
         detail = clean_result.stderr.strip() or clean_result.stdout.strip()
         return False, f"Échec de clean_text.py (code {clean_result.returncode}).\n{detail}"
+
+    if not cleaned_transcript.is_file() or not cleaned_transcript.read_text(encoding="utf-8").strip():
+        return False, "Le nettoyage n'a pas produit de transcription nettoyée exploitable."
+
+    if ai_mode == "local":
+        return False, (
+            "Le résumé local n'est pas implémenté dans cette version. "
+            "Choisissez le mode API dans Configuration puis réessayez la finalisation."
+        )
 
     summary_args = [
         sys.executable,
@@ -399,9 +478,7 @@ def generate_resume(project_id, config=None, reuse_existing=False):
     if not generated_report.exists():
         return False, f"Commande terminée, mais rapport introuvable : {generated_report}"
 
-    project_report = projects.resume_html_path(project_id)
-    project_report.write_text(generated_report.read_text(encoding="utf-8"), encoding="utf-8")
-    return True, f"Résumé généré et enregistré dans le projet : {project_report}"
+    return True, f"Résumé généré dans le dossier du projet : {generated_report}"
 
 
 def generate_tasks(project_id):

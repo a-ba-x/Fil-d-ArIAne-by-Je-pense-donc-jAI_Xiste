@@ -53,17 +53,17 @@ class MeetingApp(tk.Tk):
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True, padx=18, pady=(4, 16))
 
-        self.tab_search = SearchTab(self.notebook, self)
+        self.tab_transcripts = TranscriptsTab(self.notebook, self)
         self.tab_session = SessionTab(self.notebook, self)
         self.tab_tasks = TasksTab(self.notebook, self)
         self.tab_planning = PlanningTab(self.notebook, self)
-        self.tab_summary = SummaryTab(self.notebook, self)
+        self.tab_resumes = ResumesTab(self.notebook, self)
         self.tab_config = ConfigTab(self.notebook, self)
 
         for frame, label in [
-            (self.tab_search, "🔍 Recherche"), (self.tab_session, "🎙️ Session"),
+            (self.tab_transcripts, "📝 Transcripts"), (self.tab_session, "🎙️ Session"),
             (self.tab_tasks, "✅ Tâches"), (self.tab_planning, "📅 Planning"),
-            (self.tab_summary, "📄 Résumé"), (self.tab_config, "⚙️ Configuration"),
+            (self.tab_resumes, "📚 Résumés"), (self.tab_config, "⚙️ Configuration"),
         ]:
             self.notebook.add(frame, text=label)
 
@@ -174,117 +174,132 @@ class MeetingApp(tk.Tk):
         self.project_combo["values"] = ids
         if self.active_project.get() not in ids:
             self.active_project.set(ids[0] if ids else "")
-        self.tab_search.refresh_project_checklist(ids)
         self._on_project_changed()
 
     def _on_project_changed(self):
         pid = self.active_project.get()
         if not pid:
             return
-        self.tab_session.refresh(pid)
-        self.tab_tasks.refresh(pid)
-        self.tab_summary.refresh(pid)
+        self.refresh_project_views(pid)
+
+    def refresh_project_views(self, project_id):
+        if not project_id:
+            return
+        self.tab_session.refresh(project_id)
+        self.tab_tasks.refresh(project_id)
+        self.tab_transcripts.refresh(project_id)
+        self.tab_resumes.refresh(project_id)
 
     def _on_tab_changed(self, event):
         self._on_project_changed()
 
 
 # ------------------------------------------------------------------------------
-class SearchTab(ttk.Frame):
+class TranscriptsTab(ttk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
-
-        top = ttk.Frame(self)
-        top.pack(fill="x", padx=8, pady=6)
-
-        ttk.Label(top, text="Recherche :").pack(side="left")
-        self.query_entry = ttk.Entry(top, width=40)
-        self.query_entry.pack(side="left", padx=6)
-
-        ttk.Label(top, text="Speaker :").pack(side="left", padx=(12, 4))
-        self.speaker_var = tk.StringVar(value="Tous")
-        self.speaker_combo = ttk.Combobox(top, textvariable=self.speaker_var, state="readonly", width=20)
-        self.speaker_combo.pack(side="left")
-
-        ttk.Button(top, text="🔍 Rechercher", command=self._do_search).pack(side="left", padx=12)
+        self.project_id = None
+        self.meetings = []
 
         body = ttk.Frame(self)
-        body.pack(fill="both", expand=True, padx=8, pady=6)
+        body.pack(fill="both", expand=True, padx=8, pady=8)
 
-        left = ttk.LabelFrame(body, text="Projets inclus")
-        left.pack(side="left", fill="y", padx=(0, 8))
-        self.project_listbox = tk.Listbox(left, selectmode="extended", width=25, height=20, exportselection=False)
-        self.project_listbox.pack(fill="y", expand=True, padx=4, pady=4)
+        sidebar = ttk.LabelFrame(body, text="Réunions du projet")
+        sidebar.pack(side="left", fill="y", padx=(0, 8))
+        self.meeting_list = tk.Listbox(sidebar, width=28, height=24, exportselection=False)
+        self.meeting_list.pack(fill="y", expand=True, padx=4, pady=4)
+        self.meeting_list.bind("<<ListboxSelect>>", self._on_meeting_selected)
 
-        right = ttk.Frame(body)
-        right.pack(side="left", fill="both", expand=True)
-        self.results_text = tk.Text(right, wrap="word", state="disabled")
-        self.results_text.pack(fill="both", expand=True)
+        main = ttk.Frame(body)
+        main.pack(side="left", fill="both", expand=True)
+        controls = ttk.Frame(main)
+        controls.pack(fill="x", pady=(0, 6))
+        self.query_var = tk.StringVar()
+        ttk.Entry(controls, textvariable=self.query_var).pack(side="left", fill="x", expand=True)
+        ttk.Button(controls, text="Rechercher", command=self._search).pack(side="left", padx=5)
+        ttk.Button(controls, text="Actualiser", command=self._reload_selected).pack(side="left")
+        self.match_label = ttk.Label(main, text="")
+        self.match_label.pack(anchor="w", pady=(0, 4))
 
-    def refresh_project_checklist(self, project_ids):
-        self.project_listbox.delete(0, "end")
-        for pid in project_ids:
-            self.project_listbox.insert("end", pid)
-        self.project_listbox.select_set(0, "end")
-        self._refresh_speakers()
+        self.transcript_text = tk.Text(main, wrap="word", state="disabled")
+        self.transcript_text.pack(fill="both", expand=True)
+        self.transcript_text.tag_configure("search_hit", background="#ffe680", foreground="#17263c")
 
-    def _selected_projects(self):
-        return [self.project_listbox.get(i) for i in self.project_listbox.curselection()]
+    def refresh(self, project_id):
+        previous_key = self._selected_key()
+        self.project_id = project_id
+        self.meetings = search.list_transcript_meetings(project_id)
+        self.meeting_list.delete(0, "end")
+        for meeting in self.meetings:
+            self.meeting_list.insert("end", meeting["label"])
 
-    def _refresh_speakers(self):
-        selected = self._selected_projects()
-        speakers = ["Tous"] + search.list_known_speakers(selected)
-        self.speaker_combo["values"] = speakers
-        if self.speaker_var.get() not in speakers:
-            self.speaker_var.set("Tous")
-
-    def _do_search(self):
-        selected = self._selected_projects()
-        if not selected:
-            messagebox.showinfo("Recherche", "Sélectionne au moins un projet.")
+        selected_index = next(
+            (i for i, meeting in enumerate(self.meetings) if meeting["key"] == previous_key),
+            0 if self.meetings else None,
+        )
+        if selected_index is None:
+            self._set_transcript("Aucune transcription disponible pour ce projet.")
             return
-        self._refresh_speakers()
-        query = self.query_entry.get()
-        speaker_filter = None if self.speaker_var.get() == "Tous" else self.speaker_var.get()
-        results = search.search_across_projects(selected, query, speaker_filter)
+        self.meeting_list.selection_clear(0, "end")
+        self.meeting_list.selection_set(selected_index)
+        self.meeting_list.activate(selected_index)
+        self._reload_selected()
 
-        self.results_text.config(state="normal")
-        self.results_text.delete("1.0", "end")
-        for project_id, res in results.items():
-            transcript_hits, task_hits = res["transcript_hits"], res["task_hits"]
-            if not transcript_hits and not task_hits:
-                continue
-            self.results_text.insert("end", f"\n=== 📁 {project_id} ===\n")
-            if transcript_hits:
-                self.results_text.insert("end", f"-- Transcript ({len(transcript_hits)}) --\n")
-                for seg in transcript_hits[:30]:
-                    speaker = seg.get("speaker") or "?"
-                    self.results_text.insert("end", f"  [{speaker}] {seg.get('text', '')}\n")
-            if task_hits:
-                taches = [(name, node, depth) for (name, node, depth) in task_hits if node.get("type") == "tache"]
-                evenements = [(name, node, depth) for (name, node, depth) in task_hits if node.get("type") == "evenement"]
-                if taches:
-                    self.results_text.insert("end", f"-- Tâches ({len(taches)}) --\n")
-                    for name, node, depth in taches:
-                        argv = node.get("argv", {})
-                        self.results_text.insert(
-                            "end",
-                            f"{'  ' * depth}- {tasks.get_title(node)} "
-                            f"(qui: {argv.get('qui') or '—'}, statut: {argv.get('statut', '—')})\n",
-                        )
-                if evenements:
-                    self.results_text.insert("end", f"-- Évènements ({len(evenements)}) --\n")
-                    for name, node, depth in evenements:
-                        argv = node.get("argv", {})
-                        self.results_text.insert(
-                            "end",
-                            f"{'  ' * depth}- {tasks.get_title(node)} (date: {argv.get('date','—')})\n",
-                        )
-        self.results_text.config(state="disabled")
+    def _selected_key(self):
+        selected = self.meeting_list.curselection() if hasattr(self, "meeting_list") else ()
+        if not selected or selected[0] >= len(self.meetings):
+            return None
+        return self.meetings[selected[0]]["key"]
 
+    def _on_meeting_selected(self, event=None):
+        self._reload_selected()
 
-# ------------------------------------------------------------------------------
+    def _set_transcript(self, text):
+        self.transcript_text.config(state="normal")
+        self.transcript_text.delete("1.0", "end")
+        self.transcript_text.insert("1.0", text)
+        self.transcript_text.tag_remove("search_hit", "1.0", "end")
+        self.transcript_text.config(state="disabled")
+        self.match_label.config(text="")
+
+    def _reload_selected(self):
+        key = self._selected_key()
+        if key is None or not self.project_id:
+            return
+        try:
+            text, meeting = search.read_transcript_meeting(self.project_id, key)
+        except OSError:
+            text = "La transcription nettoyée n’est pas encore disponible pour cette réunion."
+        self._set_transcript(text)
+
+    def _search(self):
+        self._reload_selected()
+        query = self.query_var.get().strip()
+        if not query:
+            return
+        self.transcript_text.config(state="normal")
+        self.transcript_text.tag_remove("search_hit", "1.0", "end")
+        start = "1.0"
+        first_match = None
+        matches = 0
+        while True:
+            match = self.transcript_text.search(
+                query, start, stopindex="end-1c", nocase=True
+            )
+            if not match:
+                break
+            finish = f"{match}+{len(query)}c"
+            self.transcript_text.tag_add("search_hit", match, finish)
+            if first_match is None:
+                first_match = match
+            matches += 1
+            start = f"{match}+1c"
+        self.transcript_text.config(state="disabled")
+        self.match_label.config(text=f"{matches} occurrence(s)")
+        if first_match:
+            self.transcript_text.see(first_match)
+
 class SessionTab(ttk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent)
@@ -300,7 +315,10 @@ class SessionTab(ttk.Frame):
         self.btn_pause = ttk.Button(btns, text="⏸️ Pause", command=self._pause)
         self.btn_resume = ttk.Button(btns, text="▶️ Reprendre", command=self._resume)
         self.btn_stop = ttk.Button(btns, text="⏹️ Terminer", command=self._stop)
-        self.action_buttons = (self.btn_start, self.btn_pause, self.btn_resume, self.btn_stop)
+        self.btn_discard = ttk.Button(btns, text="Abandonner la réunion", command=self._discard)
+        self.action_buttons = (
+            self.btn_start, self.btn_pause, self.btn_resume, self.btn_stop, self.btn_discard
+        )
         for b in self.action_buttons:
             b.pack(side="left", padx=6)
 
@@ -309,10 +327,20 @@ class SessionTab(ttk.Frame):
         state = projects.load_session_state(project_id)
         status = state.get("status", "stopped")
         self.status_label.config(text=f"Statut : {STATUS_LABELS.get(status, status)}")
+        pending = pipeline_hooks.has_unfinalized_meeting(project_id)
+        if pending and status == "stopped":
+            self.status_label.config(
+                text="Finalisation en attente : utilisez Reessayer la finalisation "
+                "ou Abandonner la reunion."
+            )
         self.btn_start.config(state=("disabled" if status == "running" else "normal"))
         self.btn_pause.config(state=("normal" if status == "running" else "disabled"))
         self.btn_resume.config(state=("normal" if status == "paused" else "disabled"))
-        self.btn_stop.config(state=("disabled" if status == "stopped" else "normal"))
+        self.btn_stop.config(
+            text="Réessayer la finalisation" if status == "stopped" and pending else "Terminer",
+            state=("normal" if status != "stopped" or pending else "disabled"),
+        )
+        self.btn_discard.config(state=("normal" if pending else "disabled"))
 
     def _run(self, func):
         project_id = self.project_id
@@ -338,7 +366,7 @@ class SessionTab(ttk.Frame):
         if not self.winfo_exists():
             return
         if self.project_id == project_id:
-            self.refresh(project_id)
+            self.app.refresh_project_views(project_id)
             self.status_label.config(text=f"{self.status_label.cget('text')}\n{msg}", wraplength=850)
         else:
             for button in self.action_buttons:
@@ -356,6 +384,19 @@ class SessionTab(ttk.Frame):
     def _stop(self):
         self._run(pipeline_hooks.stop_recording)
 
+    def _discard(self):
+        if not self.project_id or not pipeline_hooks.has_unfinalized_meeting(self.project_id):
+            return
+        confirmed = messagebox.askyesno(
+            "Abandonner la réunion ?",
+            "Cette action arrêtera la transcription et supprimera les fichiers de la "
+            "réunion en cours ainsi que ses éventuelles archives partielles. "
+            "Cette suppression ne peut pas être annulée.\n\nAbandonner cette réunion ?",
+            icon="warning",
+        )
+        if confirmed:
+            self._run(pipeline_hooks.discard_meeting)
+
 
 # ------------------------------------------------------------------------------
 class TasksTab(ttk.Frame):
@@ -369,7 +410,7 @@ class TasksTab(ttk.Frame):
         top.pack(fill="x", padx=8, pady=6)
         ttk.Radiobutton(top, text="Actuelle", variable=self.view_mode, value="current",
                         command=self._refresh_tree).pack(side="left")
-        ttk.Radiobutton(top, text="Historique", variable=self.view_mode, value="archived",
+        ttk.Radiobutton(top, text="Terminées / passées", variable=self.view_mode, value="archived",
                         command=self._refresh_tree).pack(side="left")
         self.show_events_var = tk.BooleanVar(value=True)
         ttk.Checkbutton(top, text="Afficher les évènements", variable=self.show_events_var, command=self._refresh_tree).pack(side="left", padx=(12, 4))
@@ -414,66 +455,35 @@ class TasksTab(ttk.Frame):
             self.tree_events.destroy()
         if not self.project_id:
             return
+
         if self.view_mode.get() == "current":
             nodes = tasks.load_current(self.project_id)
-            for name, node, depth in tasks.iter_tree({k: v for k, v in nodes.items() if v.get("type") == "tache"}):
-                argv = node.get("argv", {})
-                parent_iid = node.get("parent") if node.get("parent") in nodes else ""
-                self.tree.insert(
-                    parent_iid, "end", iid=name, text=tasks.get_title(node),
-                    values=(node.get("type"), argv.get("qui", "") or "", argv.get("quand", "") or "",
-                            argv.get("statut", "") or "", "✅" if node.get("completed") else ""),
-                )
-            if self.show_events_var.get():
-                events = {k: v for k, v in nodes.items() if v.get("type") == "evenement"}
-                if events:
-                    columns = ("type", "date", "termine")
-                    self.tree_events = ttk.Treeview(self, columns=columns, show="tree headings", height=8)
-                    self.tree_events.heading("#0", text="Titre")
-                    self.tree_events.heading("type", text="Type")
-                    self.tree_events.heading("date", text="Date")
-                    self.tree_events.heading("termine", text="Terminé")
-                    self.tree_events.column("#0", width=240)
-                    self.tree_events.column("type", width=80)
-                    self.tree_events.column("date", width=120)
-                    self.tree_events.column("termine", width=80)
-                    self.tree_events.pack(side="top", fill="x", padx=8, pady=(0, 8))
-                    def _children_map(nodes):
-                        children = {name: [] for name in nodes}
-                        roots = []
-                        for name, node in nodes.items():
-                            parent = node.get("parent")
-                            if parent is None or parent not in nodes:
-                                roots.append(name)
-                            else:
-                                children[parent].append(name)
-                        return children, roots
-                    children, roots = _children_map(events)
-                    def _walk(names, depth):
-                        for name in sorted(names):
-                            node = events[name]
-                            argv = node.get("argv", {})
-                            parent_iid = node.get("parent") if node.get("parent") in events else ""
-                            self.tree_events.insert(
-                                parent_iid, "end", iid=name, text=tasks.get_title(node),
-                                values=(
-                                    node.get("type"),
-                                    argv.get("date", "") or "",
-                                    "✅" if node.get("completed") else "",
-                                ),
-                            )
-                            _walk(children.get(name, []), depth + 1)
-                    _walk(roots, 0)
         else:
-            archive = tasks.load_archived(self.project_id)
-            for i, entry in enumerate(reversed(archive[-30:])):
-                self.tree.insert(
-                    "", "end", iid=f"archive-{i}",
-                    text=f"{entry['archived_at']} -- {entry['reason']}",
-                    values=("", "", "", "", ""),
-                )
-        self._build_detail_placeholder()
+            nodes = tasks.load_completed(self.project_id)
 
+        visible_nodes = {
+            name: node for name, node in nodes.items()
+            if self.show_events_var.get() or node.get("type") != "evenement"
+        }
+        for name, node, depth in tasks.iter_tree(visible_nodes):
+            argv = node.get("argv", {})
+            parent = node.get("parent")
+            parent_iid = parent if parent in visible_nodes else ""
+            date_value = argv.get("quand") or argv.get("date") or ""
+            self.tree.insert(
+                parent_iid,
+                "end",
+                iid=name,
+                text=tasks.get_title(node),
+                values=(
+                    node.get("type", tasks.DEFAULT_TYPE),
+                    argv.get("qui", "") or "",
+                    date_value,
+                    argv.get("statut", "") or "",
+                    "✓" if node.get("completed") else "",
+                ),
+            )
+        self._build_detail_placeholder()
     def _on_select(self, event):
         if self.view_mode.get() != "current":
             return
@@ -497,11 +507,33 @@ class TasksTab(ttk.Frame):
         ttk.Label(self.detail, text=f"Type : {node_type}").grid(row=row, column=0, columnspan=2, sticky="w", padx=6, pady=2)
         row += 1
 
-        completed_var = tk.BooleanVar(value=node.get("completed", False))
-        ttk.Checkbutton(self.detail, text="Terminé", variable=completed_var).grid(
-            row=row, column=0, columnspan=2, sticky="w", padx=6, pady=2)
-        row += 1
+        node_type = node.get("type", tasks.DEFAULT_TYPE)
+        initial_status = argv.get("statut", "a_faire")
+        if initial_status == "fait":
+            initial_status = "termine"
+        completed_var = tk.BooleanVar(
+            value=bool(node.get("completed")) or initial_status == "termine"
+        )
+        statut_var = tk.StringVar(value=initial_status)
 
+        def _sync_status_from_checkbox():
+            if node_type == "tache":
+                if completed_var.get():
+                    statut_var.set("termine")
+                elif statut_var.get() == "termine":
+                    statut_var.set("a_faire")
+
+        def _sync_checkbox_from_status(event=None):
+            if node_type == "tache":
+                completed_var.set(statut_var.get() == "termine")
+
+        ttk.Checkbutton(
+            self.detail,
+            text="Terminé",
+            variable=completed_var,
+            command=_sync_status_from_checkbox,
+        ).grid(row=row, column=0, columnspan=2, sticky="w", padx=6, pady=2)
+        row += 1
         entries = {}
         titre_var = tk.StringVar(value=argv.get("titre", ""))
         ttk.Label(self.detail, text="Titre").grid(row=row, column=0, sticky="w", padx=6)
@@ -517,10 +549,16 @@ class TasksTab(ttk.Frame):
                 entries[field] = var
                 row += 1
 
-            statut_var = tk.StringVar(value=argv.get("statut", "a_faire"))
             ttk.Label(self.detail, text="Statut").grid(row=row, column=0, sticky="w", padx=6)
-            ttk.Combobox(self.detail, textvariable=statut_var, values=["a_faire", "en_cours", "fait"],
-                         state="readonly", width=22).grid(row=row, column=1, padx=6, pady=2)
+            status_combo = ttk.Combobox(
+                self.detail,
+                textvariable=statut_var,
+                values=["a_faire", "en_cours", "termine"],
+                state="readonly",
+                width=22,
+            )
+            status_combo.grid(row=row, column=1, padx=6, pady=2)
+            status_combo.bind("<<ComboboxSelected>>", _sync_checkbox_from_status)
             entries["statut"] = statut_var
             row += 1
         else:
@@ -576,7 +614,7 @@ class PlanningTab(ttk.Frame):
         if not project_id:
             return
         nodes = tasks.load_current(project_id)
-        default_path = projects.project_dir(project_id) / "planning.ics"
+        default_path = projects.project_dir(project_id) / "archive" / "calendar" / "latest.ical"
         calendar_export.save_ics(nodes, default_path, calendar_name=project_id)
 
         dest = filedialog.asksaveasfilename(
@@ -591,63 +629,76 @@ class PlanningTab(ttk.Frame):
 
 
 # ------------------------------------------------------------------------------
-class SummaryTab(ttk.Frame):
+class ResumesTab(ttk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
         self.project_id = None
+        self.reports = []
 
-        top = ttk.Frame(self)
-        top.pack(fill="x", padx=8, pady=6)
-        self.generate_btn = ttk.Button(top, text="Nettoyer et générer le résumé", style="Accent.TButton",
-                                       command=self._generate)
-        self.generate_btn.pack(side="left")
-        self.open_btn = ttk.Button(top, text="🌐 Ouvrir dans le navigateur", command=self._open_browser)
-        self.open_btn.pack(side="left", padx=8)
+        body = ttk.Frame(self)
+        body.pack(fill="both", expand=True, padx=8, pady=8)
+        sidebar = ttk.LabelFrame(body, text="Comptes rendus archivés")
+        sidebar.pack(side="left", fill="y", padx=(0, 8))
+        self.report_list = tk.Listbox(sidebar, width=30, height=24, exportselection=False)
+        self.report_list.pack(fill="y", expand=True, padx=4, pady=4)
+        self.report_list.bind("<<ListboxSelect>>", self._on_report_selected)
 
-        self.info_label = ttk.Label(self, text="", wraplength=800, justify="left")
-        self.info_label.pack(padx=8, pady=12, anchor="w")
+        main = ttk.Frame(body)
+        main.pack(side="left", fill="both", expand=True)
+        self.info_label = ttk.Label(main, text="Sélectionnez un compte rendu.")
+        self.info_label.pack(anchor="w", pady=(4, 12))
+        self.open_btn = ttk.Button(
+            main,
+            text="Ouvrir le compte rendu dans le navigateur",
+            command=self._open_selected,
+            state="disabled",
+        )
+        self.open_btn.pack(anchor="w")
 
     def refresh(self, project_id):
+        previous_path = self._selected_path()
         self.project_id = project_id
-        path = projects.resume_html_path(project_id)
-        if path.exists():
-            preview = path.read_text(encoding="utf-8")
-            preview_text = preview if len(preview) < 2000 else preview[:2000] + "\n... (tronqué, voir navigateur)"
-            self.info_label.config(text=f"Résumé disponible ({path}) :\n\n{preview_text}")
-            self.open_btn.config(state="normal")
-        else:
-            self.info_label.config(text=f"Pas encore de résumé pour '{project_id}'.")
+        reports_dir = projects.meeting_reports_dir(project_id)
+        self.reports = sorted(reports_dir.glob("*.html"), key=lambda path: path.name, reverse=True)
+        self.report_list.delete(0, "end")
+        for path in self.reports:
+            self.report_list.insert("end", search.meeting_label(path.stem))
+
+        selected_index = next(
+            (i for i, path in enumerate(self.reports) if path == previous_path),
+            0 if self.reports else None,
+        )
+        if selected_index is None:
+            self.info_label.config(text="Aucun compte rendu archivé pour ce projet.")
             self.open_btn.config(state="disabled")
-
-    def _generate(self):
-        if not self.project_id:
             return
-        project_id = self.project_id
-        cfg = storage.load_config()
-        self.generate_btn.config(state="disabled", text="Génération en cours…")
+        self.report_list.selection_clear(0, "end")
+        self.report_list.selection_set(selected_index)
+        self.report_list.activate(selected_index)
+        self._show_selected()
 
-        def run():
-            try:
-                result = pipeline_hooks.generate_resume(project_id, cfg)
-            except Exception as exc:
-                result = (False, f"Erreur pendant la génération : {exc}")
-            self.app.after(0, lambda: self._finish_generate(project_id, *result))
+    def _selected_path(self):
+        selected = self.report_list.curselection() if hasattr(self, "report_list") else ()
+        if not selected or selected[0] >= len(self.reports):
+            return None
+        return self.reports[selected[0]]
 
-        threading.Thread(target=run, daemon=True).start()
+    def _on_report_selected(self, event=None):
+        self._show_selected()
 
-    def _finish_generate(self, project_id, ok, msg):
-        self.generate_btn.config(state="normal", text="Nettoyer et générer le résumé")
-        (messagebox.showinfo if ok else messagebox.showerror)("Résumé", msg)
-        self.refresh(project_id)
+    def _show_selected(self):
+        path = self._selected_path()
+        if path is None:
+            return
+        self.info_label.config(text=f"Compte rendu : {path.name}")
+        self.open_btn.config(state="normal")
 
-    def _open_browser(self):
-        path = projects.resume_html_path(self.project_id)
-        if path.exists():
-            webbrowser.open(path.as_uri())
+    def _open_selected(self):
+        path = self._selected_path()
+        if path and path.is_file():
+            webbrowser.open(path.resolve().as_uri())
 
-
-# ------------------------------------------------------------------------------
 class ConfigTab(ttk.Frame):
     API_PROVIDERS = ["openai", "anthropic", "azure", "google", "whisper", "whisperx", "gradium"]
 

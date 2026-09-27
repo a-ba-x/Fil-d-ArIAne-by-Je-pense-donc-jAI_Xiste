@@ -1,0 +1,57 @@
+[19:02:31] Recording and transcription started for C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3.
+[19:02:31] Recording C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio0.wav...
+Recording saved to C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio0.wav
+[19:02:46] Recording C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio1.wav...
+[19:02:47] Transcribing C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio0.wav...
+[19:02:57] Transcription complete: transcript0.txt
+[19:02:57] [CLEAN] Starting cleaning...
+Fichiers sélectionnés :
+  transcript_context.txt
+  transcript0.txt
+Ajouté au fichier brut : transcript_context.txt
+Bloc extrait: ~0 mots
+AI: api
+Bloc vide — aucun texte à nettoyer.
+Fichier supprimé : transcript_context.txt
+[19:03:00] [CLEAN] Cleaning complete.
+Recording saved to C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio1.wav
+[19:03:02] Recording C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio2.wav...
+[19:03:02] Transcribing C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio1.wav...
+[19:03:12] Transcription complete: transcript1.txt
+[19:03:12] [CLEAN] Starting cleaning...
+Fichiers sélectionnés :
+  transcript0.txt
+  transcript1.txt
+Ajouté au fichier brut : transcript0.txt
+Bloc extrait: ~0 mots
+AI: api
+Bloc vide — aucun texte à nettoyer.
+Fichier supprimé : transcript0.txt
+[19:03:15] [CLEAN] Cleaning complete.
+Recording saved to C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio2.wav
+[19:03:17] Recording C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio3.wav...
+[19:03:17] Transcribing C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio2.wav...
+[19:03:26] Transcription complete: transcript2.txt
+[19:03:26] [CLEAN] Starting cleaning...
+Fichiers sélectionnés :
+  transcript1.txt
+  transcript2.txt
+Ajouté au fichier brut : transcript1.txt
+Bloc extrait: ~0 mots
+AI: api
+Bloc vide — aucun texte à nettoyer.
+Fichier supprimé : transcript1.txt
+[19:03:31] [CLEAN] Cleaning complete.
+Recording saved to C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio3.wav
+[19:03:32] Transcribing C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio3.wav...
+[19:03:32] Recording C:\Users\Usuario\Desktop\Self\Events-Workshops\X-IA Rise of Agents Hackathon\Hackathon-X-AI-Je-pense-donc-j-AI-Xiste\projects\project_3\files\audio\audio4.wav...
+[19:03:42] Transcription complete: transcript3.txt
+[19:03:42] [CLEAN] Starting cleaning...
+Fichiers sélectionnés :
+  transcript2.txt
+  transcript3.txt
+Ajouté au fichier brut : transcript2.txt
+Bloc extrait: ~0 mots
+AI: api
+Bloc vide — aucun texte à nettoyer.
+Fichier supprimé : transcript2.txt

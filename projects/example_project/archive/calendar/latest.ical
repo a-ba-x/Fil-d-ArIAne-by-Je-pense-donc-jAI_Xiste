@@ -1,4 +1,5 @@
 BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//RiseOfAgentsX//MeetingAgent//FR
-END:VCALENDAR
+X-WR-CALNAME:example_project
+END:VCALENDAR
