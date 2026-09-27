@@ -29,9 +29,9 @@ class MeetingApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Rise of Agents X -- Agent de réunions")
-        self.geometry("1150x700")
-        self.minsize(900, 600)
-        self.configure(background="#f4f6fa")
+        self.geometry("1280x800")
+        self.minsize(1020, 650)
+        self.configure(background="#f7f8fa")
 
         # --- Configuration du style global et des onglets ---
         self.style = ttk.Style(self)
@@ -39,27 +39,46 @@ class MeetingApp(tk.Tk):
         if "clam" in available_themes:
             self.style.theme_use("clam")
 
-        self.style.configure("TFrame", background="#f4f6fa")
+        self.style.configure("TFrame", background="#f7f8fa")
         self.style.configure("Card.TFrame", background="#ffffff")
-        self.style.configure("TLabel", background="#f4f6fa", foreground="#243247", font=("Segoe UI", 10))
-        self.style.configure("Title.TLabel", font=("Segoe UI", 17, "bold"), foreground="#17263c")
-        self.style.configure("TButton", padding=(10, 6), font=("Segoe UI", 9))
-        self.style.configure("Accent.TButton", padding=(12, 7), font=("Segoe UI", 9, "bold"))
-        self.style.configure("TEntry", padding=5)
-        self.style.configure("TCombobox", padding=4)
-        self.style.configure("TNotebook", background="#f4f6fa", borderwidth=0, tabmargins=(0, 8, 0, 0))
-        self.style.configure("TNotebook.Tab", padding=(16, 10), font=("Segoe UI", 10))
-        self.style.map("TNotebook.Tab", background=[("selected", "#ffffff"), ("active", "#e8edf5")])
-        self.style.configure("Treeview", rowheight=28, font=("Segoe UI", 9), background="#ffffff",
-                             fieldbackground="#ffffff")
-        self.style.configure("Treeview.Heading", font=("Segoe UI", 9, "bold"), padding=7)
+        self.style.configure("Sidebar.TFrame", background="#ffffff")
+        self.style.configure("TLabel", background="#f7f8fa", foreground="#202633", font=("Segoe UI", 10))
+        self.style.configure("Title.TLabel", font=("Segoe UI", 16, "bold"), foreground="#202633")
+        self.style.configure("Section.TLabel", font=("Segoe UI", 11, "bold"), foreground="#202633")
+        self.style.configure("TButton", padding=(13, 8), font=("Segoe UI", 9), background="#ffffff", foreground="#394150", borderwidth=0, relief="flat", focusthickness=0, focuscolor="#ffffff")
+        self.style.map("TButton", background=[("disabled", "#f3f4f6"), ("pressed", "#e9eaf0"), ("active", "#f1f2f6")], foreground=[("disabled", "#a3a9b4")], relief=[("pressed", "flat"), ("!pressed", "flat")])
+        self.style.configure("Primary.TButton", padding=(14, 8), font=("Segoe UI", 9, "bold"), background="#6558d3", foreground="#ffffff", borderwidth=0, relief="flat", focusthickness=0, focuscolor="#6558d3")
+        self.style.map("Primary.TButton", background=[("disabled", "#dedcf2"), ("pressed", "#4e43b5"), ("active", "#594cc7")], foreground=[("disabled", "#ffffff")], relief=[("pressed", "flat"), ("!pressed", "flat")])
+        self.style.configure("Destructive.TButton", padding=(13, 8), font=("Segoe UI", 9), background="#fff7f6", foreground="#b54743", borderwidth=0, relief="flat", focusthickness=0, focuscolor="#fff7f6")
+        self.style.map("Destructive.TButton", background=[("disabled", "#f5f3f3"), ("pressed", "#f5e4e2"), ("active", "#fcecea")], foreground=[("disabled", "#b9a4a2")], relief=[("pressed", "flat"), ("!pressed", "flat")])
+        self.style.configure("Nav.TButton", anchor="w", padding=(14, 10), font=("Segoe UI", 10), background="#ffffff", foreground="#596273", borderwidth=0, relief="flat", focusthickness=0, focuscolor="#ffffff")
+        self.style.map("Nav.TButton", background=[("selected", "#efedfb"), ("active", "#f2f1fb")], foreground=[("selected", "#6558d3"), ("disabled", "#a3a9b4")], relief=[("pressed", "flat"), ("!pressed", "flat")])
+        self.style.configure("TRadiobutton", padding=(8, 6), font=("Segoe UI", 9), background="#f7f8fa", foreground="#465061", borderwidth=0, relief="flat")
+        self.style.map("TRadiobutton", background=[("selected", "#efedfb"), ("active", "#f1f2f6")], foreground=[("selected", "#5146b8")])
+        self.style.configure("TCheckbutton", padding=(8, 6), font=("Segoe UI", 9), background="#f7f8fa", foreground="#465061", borderwidth=0, relief="flat")
+        self.style.map("TCheckbutton", background=[("active", "#f1f2f6")], foreground=[("disabled", "#a3a9b4")])
+        self.style.configure("TEntry", padding=8, fieldbackground="#ffffff")
+        self.style.configure("TCombobox", padding=7, fieldbackground="#ffffff")
+        self.style.configure("TNotebook", background="#f7f8fa", borderwidth=0)
+        self.style.layout("Hidden.TNotebook.Tab", [])
+        self.style.configure("Treeview", rowheight=34, font=("Segoe UI", 10), background="#ffffff", fieldbackground="#ffffff", borderwidth=0)
+        self.style.configure("Treeview.Heading", font=("Segoe UI", 9, "bold"), padding=10, background="#f4f5f8", foreground="#737d8c")
 
         self.active_project = tk.StringVar()
+        shell = ttk.Frame(self, style="Card.TFrame")
+        shell.pack(fill="both", expand=True)
+        self.nav = ttk.Frame(shell, style="Sidebar.TFrame", width=218, padding=(14, 20))
+        self.nav.pack(side="left", fill="y")
+        self.nav.pack_propagate(False)
+        ttk.Label(self.nav, text="◈  Rise of Agents", background="#ffffff", foreground="#202633", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=8, pady=(3, 28))
+        ttk.Label(self.nav, text="WORKSPACE", background="#ffffff", foreground="#9299a6", font=("Segoe UI", 8, "bold")).pack(anchor="w", padx=12, pady=(0, 8))
+        self.workspace = ttk.Frame(shell)
+        self.workspace.pack(side="left", fill="both", expand=True)
         self._build_top_bar()
 
         # Séparateur visuel entre la barre du haut et les onglets
-        self.notebook = ttk.Notebook(self)
-        self.notebook.pack(fill="both", expand=True, padx=18, pady=(4, 16))
+        self.notebook = ttk.Notebook(self.workspace, style="Hidden.TNotebook")
+        self.notebook.pack(fill="both", expand=True, padx=24, pady=(0, 22))
 
         self.tab_transcripts = TranscriptsTab(self.notebook, self)
         self.tab_session = SessionTab(self.notebook, self)
@@ -74,6 +93,13 @@ class MeetingApp(tk.Tk):
             (self.tab_resumes, "📚 Résumés"), (self.tab_config, "⚙️ Configuration"),
         ]:
             self.notebook.add(frame, text=label)
+
+        self._nav_buttons = []
+        for i, (label, icon) in enumerate([("Session", "◉"), ("Search", "⌕"), ("Tasks", "✓"), ("Planning", "▦"), ("Summary", "▤"), ("Settings", "⚙")]):
+            button = ttk.Button(self.nav, text=f"{icon}   {label}", style="Nav.TButton", command=lambda index=i: self._select_page(index))
+            button.pack(fill="x", pady=2)
+            self._nav_buttons.append(button)
+        self._select_page(0)
 
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
         self.refresh_project_list()
@@ -103,10 +129,9 @@ class MeetingApp(tk.Tk):
 
     # --- Barre du haut : sélection / création de projet -----------------------
     def _build_top_bar(self):
-        bar = ttk.Frame(self, style="Card.TFrame", padding=(20, 12))
-        bar.pack(fill="x", padx=18, pady=(16, 8))
+        bar = ttk.Frame(self.workspace, padding=(24, 20, 24, 14))
+        bar.pack(fill="x")
 
-        ttk.Label(bar, text="Rise of Agents X", style="Title.TLabel").pack(side="left", padx=(0, 24))
         ttk.Label(bar, text="Projet").pack(side="left", padx=(0, 6))
         self.project_combo = ttk.Combobox(bar, textvariable=self.active_project, state="readonly", width=24)
         self.project_combo.pack(side="left", padx=(0, 12))
@@ -114,10 +139,16 @@ class MeetingApp(tk.Tk):
 
         self.new_project_entry = ttk.Entry(bar, width=20)
         self.new_project_entry.pack(side="left")
-        ttk.Button(bar, text="Créer", style="Accent.TButton", command=self._create_project).pack(side="left", padx=(6, 14))
+        ttk.Button(bar, text="Créer", style="Primary.TButton", command=self._create_project).pack(side="left", padx=(6, 14))
 
         ttk.Button(bar, text="Importer…", command=self._import_project_folder).pack(side="left", padx=4)
         ttk.Button(bar, text="Fichiers du projet", command=self._show_project_files).pack(side="left", padx=4)
+
+    def _select_page(self, index):
+        page_index = [1, 0, 2, 3, 4, 5][index]
+        self.notebook.select(page_index)
+        for i, button in enumerate(self._nav_buttons):
+            button.state(["selected"] if i == index else ["!selected"])
 
     def _show_project_files(self):
         import os
@@ -211,11 +242,12 @@ class TranscriptsTab(ttk.Frame):
         self.meetings = []
 
         body = ttk.Frame(self)
-        body.pack(fill="both", expand=True, padx=8, pady=8)
+        body.pack(fill="both", expand=True, padx=4, pady=6)
 
         sidebar = ttk.LabelFrame(body, text="Réunions du projet")
         sidebar.pack(side="left", fill="y", padx=(0, 8))
         self.meeting_list = tk.Listbox(sidebar, width=28, height=24, exportselection=False)
+        self.meeting_list.configure(background="#ffffff", foreground="#344054", selectbackground="#efedfb", selectforeground="#202633", relief="flat", borderwidth=0, highlightthickness=0, font=("Segoe UI", 10), activestyle="none")
         self.meeting_list.pack(fill="y", expand=True, padx=4, pady=4)
         self.meeting_list.bind("<<ListboxSelect>>", self._on_meeting_selected)
 
@@ -225,12 +257,12 @@ class TranscriptsTab(ttk.Frame):
         controls.pack(fill="x", pady=(0, 6))
         self.query_var = tk.StringVar()
         ttk.Entry(controls, textvariable=self.query_var).pack(side="left", fill="x", expand=True)
-        ttk.Button(controls, text="Rechercher", command=self._search).pack(side="left", padx=5)
+        ttk.Button(controls, text="Rechercher", style="Primary.TButton", command=self._search).pack(side="left", padx=5)
         ttk.Button(controls, text="Actualiser", command=self._reload_selected).pack(side="left")
         self.match_label = ttk.Label(main, text="")
         self.match_label.pack(anchor="w", pady=(0, 4))
 
-        self.transcript_text = tk.Text(main, wrap="word", state="disabled")
+        self.transcript_text = tk.Text(main, wrap="word", state="disabled", background="#ffffff", foreground="#344054", relief="flat", borderwidth=0, highlightthickness=0, padx=18, pady=16, font=("Segoe UI", 10), spacing1=3, spacing3=3)
         self.transcript_text.pack(fill="both", expand=True)
         self.transcript_text.tag_configure("search_hit", background="#ffe680", foreground="#17263c")
 
@@ -314,16 +346,16 @@ class SessionTab(ttk.Frame):
         self.app = app
         self.project_id = None
 
-        self.status_label = ttk.Label(self, text="", font=("", 14))
-        self.status_label.pack(pady=20)
+        self.status_label = ttk.Label(self, text="", font=("Segoe UI", 14, "bold"), justify="center")
+        self.status_label.pack(pady=(100, 28))
 
         btns = ttk.Frame(self)
-        btns.pack()
-        self.btn_start = ttk.Button(btns, text="▶️ Démarrer", command=self._start)
+        btns.pack(pady=12)
+        self.btn_start = ttk.Button(btns, text="▶️ Démarrer", style="Primary.TButton", command=self._start)
         self.btn_pause = ttk.Button(btns, text="⏸️ Pause", command=self._pause)
-        self.btn_resume = ttk.Button(btns, text="▶️ Reprendre", command=self._resume)
-        self.btn_stop = ttk.Button(btns, text="⏹️ Terminer", command=self._stop)
-        self.btn_discard = ttk.Button(btns, text="Abandonner la réunion", command=self._discard)
+        self.btn_resume = ttk.Button(btns, text="▶️ Reprendre", style="Primary.TButton", command=self._resume)
+        self.btn_stop = ttk.Button(btns, text="⏹️ Terminer", style="Primary.TButton", command=self._stop)
+        self.btn_discard = ttk.Button(btns, text="Abandonner la réunion", style="Destructive.TButton", command=self._discard)
         self.action_buttons = (
             self.btn_start, self.btn_pause, self.btn_resume, self.btn_stop, self.btn_discard
         )
@@ -415,19 +447,19 @@ class TasksTab(ttk.Frame):
         self.view_mode = tk.StringVar(value="current")
 
         top = ttk.Frame(self)
-        top.pack(fill="x", padx=8, pady=6)
+        top.pack(fill="x", padx=4, pady=(4, 18))
         ttk.Radiobutton(top, text="Actuelle", variable=self.view_mode, value="current",
                         command=self._refresh_tree).pack(side="left")
         ttk.Radiobutton(top, text="Terminées / passées", variable=self.view_mode, value="archived",
                         command=self._refresh_tree).pack(side="left")
         self.show_events_var = tk.BooleanVar(value=True)
         ttk.Checkbutton(top, text="Afficher les évènements", variable=self.show_events_var, command=self._refresh_tree).pack(side="left", padx=(12, 4))
-        ttk.Button(top, text="➕ Tâche", command=lambda: self._add_node("tache")).pack(side="left", padx=(20, 4))
+        ttk.Button(top, text="➕ Tâche", style="Primary.TButton", command=lambda: self._add_node("tache")).pack(side="left", padx=(20, 4))
         ttk.Button(top, text="➕ Évènement", command=lambda: self._add_node("evenement")).pack(side="left")
-        ttk.Button(top, text="📝 Générer la liste des tâches", command=self._generate_tasks).pack(side="left", padx=20)
+        ttk.Button(top, text="📝 Générer la liste des tâches", style="Primary.TButton", command=self._generate_tasks).pack(side="left", padx=20)
 
         body = ttk.Frame(self)
-        body.pack(fill="both", expand=True, padx=8, pady=6)
+        body.pack(fill="both", expand=True, padx=4, pady=4)
 
         columns = ("type", "qui", "quand", "statut", "termine")
         self.tree = ttk.Treeview(body, columns=columns, show="tree headings", height=20)
@@ -590,7 +622,7 @@ class TasksTab(ttk.Frame):
             tasks.update_node(self.project_id, name, argv_updates=new_argv, completed=completed_var.get())
             self._refresh_tree()
 
-        ttk.Button(self.detail, text="💾 Enregistrer", command=_save).grid(
+        ttk.Button(self.detail, text="💾 Enregistrer", style="Primary.TButton", command=_save).grid(
             row=row, column=0, columnspan=2, pady=10)
 
     def _add_node(self, node_type):
@@ -615,7 +647,7 @@ class PlanningTab(ttk.Frame):
         self.app = app
         ttk.Label(self, text="Génère un fichier .ics à partir des dates trouvées dans les "
                               "tâches/évènements du projet actif.").pack(padx=8, pady=12)
-        ttk.Button(self, text="📅 Générer le planning", command=self._generate).pack()
+        ttk.Button(self, text="📅 Générer le planning", style="Primary.TButton", command=self._generate).pack()
 
     def _generate(self):
         project_id = self.app.active_project.get()
@@ -646,9 +678,10 @@ class ResumesTab(ttk.Frame):
 
         body = ttk.Frame(self)
         body.pack(fill="both", expand=True, padx=8, pady=8)
-        sidebar = ttk.LabelFrame(body, text="Comptes rendus archivés")
+        sidebar = ttk.LabelFrame(body, text="Comptes rendus archivés", padding=10)
         sidebar.pack(side="left", fill="y", padx=(0, 8))
         self.report_list = tk.Listbox(sidebar, width=30, height=24, exportselection=False)
+        self.report_list.configure(background="#ffffff", foreground="#344054", selectbackground="#efedfb", selectforeground="#202633", relief="flat", borderwidth=0, highlightthickness=0, font=("Segoe UI", 10), activestyle="none")
         self.report_list.pack(fill="y", expand=True, padx=4, pady=4)
         self.report_list.bind("<<ListboxSelect>>", self._on_report_selected)
 
@@ -661,6 +694,7 @@ class ResumesTab(ttk.Frame):
         self.install_viewer_btn = ttk.Button(
             self.viewer_controls,
             text="Installer le visualiseur",
+            style="Primary.TButton",
             command=self._install_viewer,
         )
         self.browser_btn = ttk.Button(
@@ -884,9 +918,9 @@ class ConfigTab(ttk.Frame):
         ttk.Entry(self.content, textvariable=self.clean_model_var, width=30).grid(
             row=13, column=1, sticky="w")
 
-        ttk.Button(self.content, text="💾 Enregistrer la configuration", command=self._save).grid(
+        ttk.Button(self.content, text="💾 Enregistrer la configuration", style="Primary.TButton", command=self._save).grid(
             row=14, column=0, sticky="w", padx=16, pady=20)
-        self.push_btn = ttk.Button(self.content, text="⬆️ Pousser sur GitHub maintenant", command=self._push)
+        self.push_btn = ttk.Button(self.content, text="⬆️ Pousser sur GitHub maintenant", style="Primary.TButton", command=self._push)
         self.push_btn.grid(row=14, column=1, sticky="w")
 
         self._toggle_github_field()
@@ -905,7 +939,7 @@ class ConfigTab(ttk.Frame):
         self.api_combo.bind("<<ComboboxSelected>>", self._on_api_provider_select)
         self.api_key_entry = ttk.Entry(self.content, textvariable=self.api_key_var, show="*", width=28)
         self.api_key_entry.grid(row=api_row, column=1, sticky="w")
-        ttk.Button(self.content, text="Ajouter / Mettre à jour", command=self._add_update_api_key).grid(
+        ttk.Button(self.content, text="Ajouter / Mettre à jour", style="Primary.TButton", command=self._add_update_api_key).grid(
             row=api_row, column=2, sticky="w", padx=8)
 
         self.api_keys_frame = ttk.Frame(self.content)
@@ -1002,7 +1036,7 @@ class ConfigTab(ttk.Frame):
             self._clear_api_add_lines()
             self._refresh_api_keys_list()
             messagebox.showinfo("Clé API", f"Clé enregistrée pour '{provider}'.")
-        add_btn = ttk.Button(self.api_keys_frame, text="Ajouter", width=12, command=add)
+        add_btn = ttk.Button(self.api_keys_frame, text="Ajouter", width=12, style="Primary.TButton", command=add)
         add_btn.grid(row=row, column=2, padx=8, sticky="w")
 
         line = {'provider_var': provider_var, 'key_var': key_var, 'combo': combo, 'entry': entry, 'add_btn': add_btn}
@@ -1025,7 +1059,7 @@ class ConfigTab(ttk.Frame):
             if storage.get_api_key(provider):
                 ttk.Label(self.api_keys_frame, text=provider, width=14).grid(row=row, column=0, sticky="w")
                 ttk.Label(self.api_keys_frame, text="***** (protégée)", width=18, foreground="grey").grid(row=row, column=1, sticky="w")
-                btn = ttk.Button(self.api_keys_frame, text="Supprimer", width=12,
+                btn = ttk.Button(self.api_keys_frame, text="Supprimer", width=12, style="Destructive.TButton",
                                  command=lambda p=provider: self._delete_api_key(p))
                 btn.grid(row=row, column=2, padx=8, sticky="w")
                 row += 1
