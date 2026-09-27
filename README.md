@@ -2,8 +2,6 @@
   <img src="assets/fil-d-ariane-team.png" alt="Fil d’ArIAne — La conversation disparaît, le fil reste." width="1200">
 </p>
 
-# Fil d’ArIAne
-
 Meetings move fast. Good ideas, decisions and commitments disappear even faster.
 Fil d’ArIAne gives the conversation a thread that stays.
 
@@ -38,18 +36,20 @@ One process continuously records the meeting, while another transcribes and clea
 
 Once the meeting is over, Fil d’ArIAne turns the conversation thread into structured, actionable information rather than leaving you with a raw transcript.
 
-🧵 Searchable conversation thread
-              ↓
-      AI structured extraction
-              ↓
-   ┌──────────┬──────────┐
-   ↓          ↓          ↓
-📄 Report   ✅ Tasks   📅 Events
-   │          │          │
-   ↓          ↓          ↓
-Summary,    Assign,     Export to
-decisions,  edit and    your calendar
-themes...   complete
+
+        🧵 Searchable conversation thread
+                      ↓
+              AI structured extraction
+                      ↓
+          ┌──────────┬──────────┐
+          ↓          ↓          ↓
+        📄 Report   ✅ Tasks   📅 Events
+          │          │          │
+          ↓          ↓          ↓
+        Summary,    Assign,     Export to
+        decisions,  edit and    your calendar
+        themes...   complete
+
 
 The generated meeting report provides a clear summary of the discussion and its key decisions. Tasks extracted from the conversation can be reviewed, edited, assigned and marked as completed, while dated events can be exported as an .ics file for use in your favourite calendar application.
 
