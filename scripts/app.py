@@ -14,6 +14,7 @@ import subprocess
 import sys
 import threading
 import webbrowser
+from pathlib import Path
 
 try:
     from tkinterweb import HtmlFrame
@@ -28,7 +29,11 @@ TASK_ARGV_FIELDS = ["titre", "qui", "quand", "statut"]
 class MeetingApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Rise of Agents X -- Agent de réunions")
+        self.title("Fil d'ArIAne")
+        icon_dir = Path(__file__).resolve().parents[1] / "assets"
+        self.app_icon_image = tk.PhotoImage(file=str(icon_dir / "fil-d-ariane-app-icon.png"))
+        self.iconphoto(True, self.app_icon_image)
+        self.iconbitmap(str(icon_dir / "fil-d-ariane.ico"))
         self.geometry("1280x800")
         self.minsize(1020, 650)
         self.configure(background="#f7f8fa")
@@ -70,7 +75,9 @@ class MeetingApp(tk.Tk):
         self.nav = ttk.Frame(shell, style="Sidebar.TFrame", width=218, padding=(14, 20))
         self.nav.pack(side="left", fill="y")
         self.nav.pack_propagate(False)
-        ttk.Label(self.nav, text="◈  Rise of Agents", background="#ffffff", foreground="#202633", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=8, pady=(3, 28))
+        logo_path = Path(__file__).resolve().parents[1] / "assets" / "fil-d-ariane-logo-sidebar.png"
+        self.logo_image = tk.PhotoImage(file=str(logo_path))
+        ttk.Label(self.nav, image=self.logo_image, background="#ffffff").pack(anchor="w", pady=(3, 28))
         ttk.Label(self.nav, text="WORKSPACE", background="#ffffff", foreground="#9299a6", font=("Segoe UI", 8, "bold")).pack(anchor="w", padx=12, pady=(0, 8))
         self.workspace = ttk.Frame(shell)
         self.workspace.pack(side="left", fill="both", expand=True)

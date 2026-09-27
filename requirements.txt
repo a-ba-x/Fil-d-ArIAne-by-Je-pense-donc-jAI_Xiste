@@ -1,0 +1,8 @@
+gradium
+numpy
+openai
+python-dotenv
+requests
+scipy
+sounddevice
+tkinterweb[recommended]
