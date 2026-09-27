@@ -1,4 +1,0 @@
-Alice : Bonjour à tous, nous allons débuter la réunion sur le projet Alpha.
-Bob : Merci Alice. J’ai actualisé le planning, il y a deux tâches à prioriser.
-Alice : Parfait. Qui souhaite s’occuper de la documentation ?
-Claire : Je veux bien m’en charger.
